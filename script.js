@@ -1,8 +1,5 @@
 // ==========================================
-// FIREBASE CONFIGURATION (Yahan apni Firebase keys daal sakte hain)
-// ==========================================
-// ==========================================
-// FIREBASE CONFIGURATION (Yahan apni keys daal di gayi hain)
+// FIREBASE CONFIGURATION
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBU19BamXpJwbwz9MG1DOiHoTHZwwhwJAQ",
@@ -15,233 +12,254 @@ const firebaseConfig = {
   measurementId: "G-JVK58D6G1Y"
 };
 
-// Initialize Firebase (Ye line script.js mein pehle se hogi, bas config replace karna hai)
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-// Global Variables
-let currentUser = null;
-let map = null;
-let busMarker = null;
-let watchId = null;
 
-// Quick Demo Autofill Helper
-function quickFill(role, user, pass) {
-  document.getElementById('loginRole').value = role;
-  document.getElementById('loginUsername').value = user;
-  document.getElementById('loginPassword').value = pass;
-}
+// ==========================================
+// ADMIN HARDCODED CREDENTIALS
+// ==========================================
+const ADMIN_CREDENTIALS = {
+  username: "admin",
+  password: "Sandeep09@" 
+};
 
-// Login System
-function handleLogin(event) {
-  event.preventDefault();
-  const role = document.getElementById('loginRole').value;
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value.trim();
+// ==========================================
+// LOGIN HANDLER
+// ==========================================
+async function handleLogin(event) {
+  if (event) event.preventDefault();
 
-  // Default Demo Accounts bypass
-  if (username === "admin" && password === "admin123" && role === "admin") {
-    loginSuccess({ username: "admin", role: "admin", assignedRoute: "All" });
-    return;
-  }
-  if (username === "student_01" && password === "pass123" && role === "student") {
-    loginSuccess({ username: "student_01", role: "student", assignedRoute: "Route-A" });
-    return;
-  }
-  if (username === "driver_01" && password === "driver123" && role === "driver") {
-    loginSuccess({ username: "driver_01", role: "driver", assignedRoute: "Route-A" });
-    return;
-  }
-
-  // Database check
-  db.ref('users/' + username).once('value')
-    .then((snapshot) => {
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        if (userData.password === password && userData.role === role) {
-          loginSuccess(userData);
-        } else {
-          alert("Galat Password ya Role chuna gaya hai!");
-        }
-      } else {
-        alert("Yeh User ID Database mein nahi mili!");
-      }
-    })
-    .catch((err) => alert("Login Error: " + err.message));
-}
-
-function loginSuccess(userData) {
-  currentUser = userData;
-  document.getElementById('loginSection').classList.add('hidden');
-  document.getElementById('userBadgeArea').classList.remove('hidden');
-  document.getElementById('userRoleBadge').innerText = userData.role;
-
-  if (userData.role === 'student') {
-    document.getElementById('studentDashboard').classList.remove('hidden');
-    document.getElementById('assignedRouteName').innerText = userData.assignedRoute;
-    initStudentMap();
-    listenToBusLocation(userData.assignedRoute);
-  } else if (userData.role === 'driver') {
-    document.getElementById('driverDashboard').classList.remove('hidden');
-    document.getElementById('driverAssignedRoute').innerText = userData.assignedRoute;
-  } else if (userData.role === 'admin') {
-    document.getElementById('adminDashboard').classList.remove('hidden');
-    loadAdminUserTable();
-  }
-}
-
-function logout() {
-  currentUser = null;
-  if (watchId) navigator.geolocation.clearWatch(watchId);
-  window.location.reload();
-}
-
-// Admin Panel Functions
-function adminCreateUser() {
-  const role = document.getElementById('adminNewRole').value;
-  const username = document.getElementById('adminNewUser').value.trim();
-  const password = document.getElementById('adminNewPass').value.trim();
-  const route = document.getElementById('adminNewRoute').value;
+  const role = document.getElementById('roleSelect').value;
+  const username = document.getElementById('usernameInput').value.trim();
+  const password = document.getElementById('passwordInput').value.trim();
 
   if (!username || !password) {
-    alert("Kripya Username aur Password dono bharein!");
+    alert("Kripya username aur password dono bharein!");
     return;
   }
 
-  db.ref('users/' + username).set({
-    username: username,
-    password: password,
-    role: role,
-    assignedRoute: route
-  }).then(() => {
-    alert(`Success! ${role.toUpperCase()} (${username}) create ho gaya hai.`);
-    document.getElementById('adminNewUser').value = '';
-    document.getElementById('adminNewPass').value = '';
-    loadAdminUserTable();
-  }).catch(err => alert("Error: " + err.message));
+  // 1. Admin Login Check
+  if (role === "admin") {
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+      showDashboard("admin");
+    } else {
+      alert("Galat Admin credentials hain!");
+    }
+  } 
+  // 2. Driver Login Check (Database se verify)
+  else if (role === "driver") {
+    const snapshot = await db.ref(`users/drivers/${username}`).once('value');
+    const userData = snapshot.val();
+    
+    if (userData && userData.password === password) {
+      showDashboard("driver", userData);
+    } else {
+      alert("Driver username ya password galat hai!");
+    }
+  } 
+  // 3. Student Login Check (Database se verify)
+  else if (role === "student") {
+    const snapshot = await db.ref(`users/students/${username}`).once('value');
+    const userData = snapshot.val();
+    
+    if (userData && userData.password === password) {
+      showDashboard("student", userData);
+    } else {
+      alert("Student username ya password galat hai!");
+    }
+  }
 }
 
-function loadAdminUserTable() {
-  db.ref('users').on('value', (snapshot) => {
-    const tbody = document.getElementById('adminUserTableBody');
-    tbody.innerHTML = '';
-    if (!snapshot.exists()) {
-      tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-400">No users found.</td></tr>`;
-      return;
-    }
-    snapshot.forEach((childSnap) => {
-      const user = childSnap.val();
-      tbody.innerHTML += `
-        <tr class="border-b hover:bg-slate-50">
-          <td class="p-2 font-bold">${user.username}</td>
-          <td class="p-2 uppercase text-xs"><span class="px-2 py-0.5 rounded bg-slate-200">${user.role}</span></td>
-          <td class="p-2">${user.assignedRoute || 'N/A'}</td>
-          <td class="p-2"><button onclick="deleteUser('${user.username}')" class="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button></td>
-        </tr>
-      `;
-    });
+// ==========================================
+// DASHBOARD SWITCHER
+// ==========================================
+function showDashboard(role, userData = null) {
+  // Hide Login Section
+  const loginSection = document.getElementById('loginSection');
+  if (loginSection) loginSection.style.display = 'none';
+
+  // Show respective dashboard
+  if (role === 'admin') {
+    const adminDash = document.getElementById('adminDashboard');
+    if (adminDash) adminDash.style.display = 'block';
+    initAdminDashboard();
+  } else if (role === 'driver') {
+    const driverDash = document.getElementById('driverDashboard');
+    if (driverDash) driverDash.style.display = 'block';
+    initDriverDashboard(userData);
+  } else if (role === 'student') {
+    const studentDash = document.getElementById('studentDashboard');
+    if (studentDash) studentDash.style.display = 'block';
+    initStudentDashboard();
+  }
+}
+
+// ==========================================
+// ADMIN: ADD NEW USER (WITH ROUTE)
+// ==========================================
+function addNewUser(event) {
+  if (event) event.preventDefault();
+
+  const role = document.getElementById('newRole').value; // 'driver' ya 'student'
+  const name = document.getElementById('newName').value.trim();
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value.trim();
+  const route = document.getElementById('newRoute').value.trim();
+
+  if (!username || !password || !name || !route) {
+    alert("Saari fields bharein!");
+    return;
+  }
+
+  // Firebase Realtime Database mein save karna
+  db.ref(`users/${role}s/${username}`).set({
+    username: username,
+    password: password,
+    name: name,
+    route: route,
+    createdAt: new Date().toISOString()
+  }).then(() => {
+    alert(`${role.toUpperCase()} account successfully ban gaya hai!`);
+    document.getElementById('addUserForm').reset();
+  }).catch((error) => {
+    alert("Error: " + error.message);
   });
 }
 
-function deleteUser(username) {
-  if (confirm(`Kya aap ${username} ko delete karna chahte hain?`)) {
-    db.ref('users/' + username).remove().then(() => alert("Deleted successfully!"));
-  }
-}
+// ==========================================
+// ADMIN: LOAD USERS & ROUTES TABLE LIVE
+// ==========================================
+function initAdminDashboard() {
+  const tableBody = document.getElementById('userTableBody');
+  if (!tableBody) return;
 
-// Driver GPS Broadcasting
-function toggleDriverGpsBroadcasting() {
-  const btn = document.getElementById('toggleGpsBtn');
-  const statusTxt = document.getElementById('driverBroadcastStatus');
+  // Realtime database listener for users list
+  db.ref('users').on('value', (snapshot) => {
+    const data = snapshot.val();
+    tableBody.innerHTML = ''; // Purani rows clear karein
 
-  if (watchId) {
-    navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-    btn.innerHTML = `<i class="fa-solid fa-satellite-dish"></i> Start Broadcast`;
-    btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow transition flex items-center gap-2";
-    statusTxt.innerText = "OFFLINE";
-    statusTxt.className = "text-amber-400";
-    return;
-  }
-
-  if (!navigator.geolocation) {
-    alert("Aapka browser Geolocation support nahi karta!");
-    return;
-  }
-
-  btn.innerHTML = `<i class="fa-solid fa-circle-stop"></i> Stop Broadcast`;
-  btn.className = "bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold shadow transition flex items-center gap-2";
-  statusTxt.innerText = "LIVE & BROADCASTING";
-  statusTxt.className = "text-emerald-400 animate-pulse";
-
-  watchId = navigator.geolocation.watchPosition(
-    (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const speed = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) : 0;
-      const timestamp = new Date().toLocaleTimeString();
-
-      document.getElementById('telemetryLat').innerText = lat.toFixed(5);
-      document.getElementById('telemetryLng').innerText = lng.toFixed(5);
-      document.getElementById('telemetrySpeed').innerText = speed + " km/h";
-      document.getElementById('telemetryTime').innerText = timestamp;
-
-      db.ref('liveBuses/' + currentUser.assignedRoute).set({
-        latitude: lat,
-        longitude: lng,
-        speed: speed,
-        driver: currentUser.username,
-        updatedAt: timestamp
-      });
-    },
-    (error) => alert("GPS Error: " + error.message),
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-  );
-}
-
-// Student Leaflet Map Tracking
-function initStudentMap() {
-  if (map) return;
-  map = L.map('map').setView([28.6139, 77.2090], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-}
-
-function refreshMapLocation() {
-  if (map && busMarker) {
-    map.setView(busMarker.getLatLng(), 16);
-  }
-}
-
-function listenToBusLocation(route) {
-  db.ref('liveBuses/' + route).on('value', (snapshot) => {
-    if (!snapshot.exists()) {
-      document.getElementById('studentBusStatus').innerText = "Bus offline / Signal waiting...";
+    if (!data || (!data.drivers && !data.students)) {
+      tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Koi user add nahi hua hai abhi tak.</td></tr>';
       return;
     }
 
-    const data = snapshot.val();
-    const lat = data.latitude;
-    const lng = data.longitude;
-    const speed = data.speed;
-
-    document.getElementById('studentBusStatus').innerText = "Connected (Live)";
-    document.getElementById('studentBusSpeed').innerText = speed + " km/h";
-
-    const latLng = [lat, lng];
-
-    if (!busMarker) {
-      const busIcon = L.divIcon({
-        className: 'custom-bus-icon',
-        html: `<div style="background:#4f46e5;color:white;padding:8px 12px;border-radius:20px;font-weight:bold;box-shadow:0 4px 6px rgba(0,0,0,0.3);display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-bus"></i> ${route}</div>`,
-        iconSize: [90, 40],
-        iconAnchor: [45, 20]
+    // 1. Render Drivers List
+    if (data.drivers) {
+      Object.keys(data.drivers).forEach((username) => {
+        const user = data.drivers[username];
+        tableBody.innerHTML += `
+          <tr class="border-b hover:bg-gray-50 text-sm">
+            <td class="p-3"><span class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded text-xs">DRIVER</span></td>
+            <td class="p-3 font-medium text-gray-800">${user.name || '-'}</td>
+            <td class="p-3 text-gray-600">${user.username}</td>
+            <td class="p-3 text-gray-600">${user.password}</td>
+            <td class="p-3 font-medium text-indigo-600">${user.route || '-'}</td>
+          </tr>
+        `;
       });
-      busMarker = L.marker(latLng, { icon: busIcon }).addTo(map);
-      map.setView(latLng, 15);
-    } else {
-      busMarker.setLatLng(latLng);
+    }
+
+    // 2. Render Students List
+    if (data.students) {
+      Object.keys(data.students).forEach((username) => {
+        const user = data.students[username];
+        tableBody.innerHTML += `
+          <tr class="border-b hover:bg-gray-50 text-sm">
+            <td class="p-3"><span class="bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded text-xs">STUDENT</span></td>
+            <td class="p-3 font-medium text-gray-800">${user.name || '-'}</td>
+            <td class="p-3 text-gray-600">${user.username}</td>
+            <td class="p-3 text-gray-600">${user.password}</td>
+            <td class="p-3 font-medium text-indigo-600">${user.route || '-'}</td>
+          </tr>
+        `;
+      });
+    }
+  });
+}
+
+// ==========================================
+// DRIVER GPS BROADCAST LOGIC
+// ==========================================
+let watchId = null;
+
+function initDriverDashboard(userData) {
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+
+  if (startBtn) {
+    startBtn.onclick = () => {
+      if (!navigator.geolocation) {
+        alert("Aapka browser Geolocation support nahi karta.");
+        return;
+      }
+
+      alert("GPS Broadcasting Shuru ho gayi hai!");
+      watchId = navigator.geolocation.watchPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const speed = position.coords.speed || 0;
+
+        if(document.getElementById('latDisplay')) document.getElementById('latDisplay').innerText = lat.toFixed(4);
+        if(document.getElementById('lngDisplay')) document.getElementById('lngDisplay').innerText = lng.toFixed(4);
+        if(document.getElementById('speedDisplay')) document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
+
+        db.ref('liveBus/location').set({
+          lat: lat,
+          lng: lng,
+          speed: speed,
+          driver: userData ? userData.username : "Driver",
+          route: userData ? userData.route : "Default Route",
+          updatedAt: Date.now()
+        });
+      }, (error) => {
+        alert("Location error: " + error.message);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000
+      });
+    };
+  }
+
+  if (stopBtn) {
+    stopBtn.onclick = () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        alert("Broadcast rok di gayi hai.");
+      }
+    };
+  }
+}
+
+// ==========================================
+// STUDENT MAP TRACKING LOGIC (Leaflet.js)
+// ==========================================
+function initStudentDashboard() {
+  const mapElement = document.getElementById('map');
+  if (!mapElement) return;
+
+  const map = L.map('map').setView([28.6139, 77.2090], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let busMarker = null;
+
+  db.ref('liveBus/location').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const lat = data.lat;
+      const lng = data.lng;
+      const route = data.route || "Live Bus";
+
+      if (!busMarker) {
+        busMarker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>${route}</b><br>Bus is moving`).openPopup();
+      } else {
+        busMarker.setLatLng([lat, lng]);
+      }
+      map.setView([lat, lng], 15);
     }
   });
 }
