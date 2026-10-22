@@ -1,0 +1,16 @@
+/* Custom Map & Glass Navigation Styling */
+#map {
+  height: 500px;
+  width: 100%;
+  z-index: 1;
+}
+
+.glass-nav {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Custom smooth transitions */
+button, input, select {
+  transition: all 0.2s ease-in-out;
+}
