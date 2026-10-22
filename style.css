@@ -1,16 +1,60 @@
-/* Custom Map & Glass Navigation Styling */
-#map {
-  height: 500px;
-  width: 100%;
-  z-index: 1;
+/* Import Google Font for a clean look */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    color: #1f2937;
 }
 
-.glass-nav {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-}
-
-/* Custom smooth transitions */
+/* Smooth transitions for interactive elements */
 button, input, select {
-  transition: all 0.2s ease-in-out;
+    transition: all 0.25s ease-in-out;
+}
+
+/* Card glassmorphism or soft shadow effect */
+.login-card, .dashboard-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Map container styling */
+#map {
+    width: 100%;
+    height: calc(100vh - 64px);
+    z-index: 1;
+}
+
+/* Leaflet Popup Customization */
+.leaflet-popup-content-wrapper {
+    background: #ffffff;
+    color: #1f2937;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+}
+
+.leaflet-popup-tip {
+    background: #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
