@@ -31,7 +31,6 @@ function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
-// Toggle user creation form fields based on role
 function toggleUserFields() {
   const role = document.getElementById('newRole').value;
   const driverFields = document.getElementById('driverFields');
@@ -115,6 +114,78 @@ function showDashboard(role, userData = null) {
 }
 
 // ==========================================
+// ADMIN SEARCH USER DETAILS (Student ID / Driver ID)
+// ==========================================
+async function searchStudentDetails() {
+  const searchId = document.getElementById('searchStudentIdInput').value.trim().toLowerCase();
+  const resultBox = document.getElementById('searchResultBox');
+  if (!searchId) {
+    alert("Kripya Student ID enter karein!");
+    return;
+  }
+
+  const snapshot = await db.ref('users/students').once('value');
+  const students = snapshot.val() || {};
+  let found = null;
+
+  Object.keys(students).forEach(username => {
+    const stu = students[username];
+    if (stu.studentId && stu.studentId.toLowerCase() === searchId) {
+      found = stu;
+    }
+  });
+
+  resultBox.classList.remove('hidden');
+  if (found) {
+    resultBox.innerHTML = `
+      <h3 class="font-bold text-green-700 text-base mb-1">Student Found:</h3>
+      <p><strong>Name:</strong> ${found.name}</p>
+      <p><strong>Student ID:</strong> ${found.studentId}</p>
+      <p><strong>Username:</strong> ${found.username}</p>
+      <p><strong>Course:</strong> ${found.course}</p>
+      <p><strong>Assigned Route:</strong> ${found.route}</p>
+    `;
+  } else {
+    resultBox.innerHTML = `<p class="text-red-600 font-semibold">No student found with ID: ${searchId}</p>`;
+  }
+}
+
+async function searchDriverDetails() {
+  const searchId = document.getElementById('searchDriverIdInput').value.trim().toLowerCase();
+  const resultBox = document.getElementById('searchResultBox');
+  if (!searchId) {
+    alert("Kripya Driver ID enter karein!");
+    return;
+  }
+
+  const snapshot = await db.ref('users/drivers').once('value');
+  const drivers = snapshot.val() || {};
+  let found = null;
+
+  Object.keys(drivers).forEach(username => {
+    const drv = drivers[username];
+    if ((drv.driverId && drv.driverId.toLowerCase() === searchId) || drv.username.toLowerCase() === searchId) {
+      found = drv;
+    }
+  });
+
+  resultBox.classList.remove('hidden');
+  if (found) {
+    resultBox.innerHTML = `
+      <h3 class="font-bold text-blue-700 text-base mb-1">Driver Found:</h3>
+      <p><strong>Name:</strong> ${found.name}</p>
+      <p><strong>Driver ID:</strong> ${found.driverId || 'N/A'}</p>
+      <p><strong>Username:</strong> ${found.username}</p>
+      <p><strong>Bus Number:</strong> ${found.busNumber}</p>
+      <p><strong>Reg. Number:</strong> ${found.regNumber || 'N/A'}</p>
+      <p><strong>Assigned Route:</strong> ${found.route}</p>
+    `;
+  } else {
+    resultBox.innerHTML = `<p class="text-red-600 font-semibold">No driver found with ID/Username: ${searchId}</p>`;
+  }
+}
+
+// ==========================================
 // ATTENDANCE LOGIC
 // ==========================================
 function markAttendance(role) {
@@ -130,6 +201,7 @@ function markAttendance(role) {
   };
 
   if (role === 'driver') {
+    attendanceObj.driverId = currentUserData.driverId || "N/A";
     attendanceObj.busNumber = currentUserData.busNumber || "N/A";
   } else {
     attendanceObj.studentId = currentUserData.studentId || "N/A";
@@ -139,6 +211,7 @@ function markAttendance(role) {
   db.ref(`attendance/${role}s/${today}/${username}`).set(attendanceObj).then(() => {
     alert("Aapki attendance successfully mark ho gayi hai!");
     checkMyAttendanceStatus(role);
+    if (role === 'student') loadStudentAttendanceHistory();
   }).catch((error) => {
     alert("Error: " + error.message);
   });
@@ -173,6 +246,39 @@ function checkMyAttendanceStatus(role) {
   });
 }
 
+// Load Student Attendance History across all dates
+function loadStudentAttendanceHistory() {
+  if (!currentUserData || currentRole !== 'student') return;
+  const username = currentUserData.username;
+  const historyBody = document.getElementById('studentAttendanceHistoryBody');
+
+  db.ref('attendance/students').on('value', (snapshot) => {
+    const allDatesData = snapshot.val() || {};
+    if (!historyBody) return;
+    historyBody.innerHTML = '';
+
+    const dates = Object.keys(allDatesData).sort().reverse(); // Newest first
+    let hasRecords = false;
+
+    dates.forEach(date => {
+      const dayRecords = allDatesData[date];
+      if (dayRecords && dayRecords[username]) {
+        hasRecords = true;
+        historyBody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 font-medium">${date}</td>
+            <td class="p-2 text-green-700 font-bold">Present ✅</td>
+          </tr>
+        `;
+      }
+    });
+
+    if (!hasRecords) {
+      historyBody.innerHTML = `<tr><td colspan="2" class="p-3 text-center text-gray-500">No attendance history found.</td></tr>`;
+    }
+  });
+}
+
 // ==========================================
 // USER MANAGEMENT & EMERGENCY
 // ==========================================
@@ -194,6 +300,7 @@ function addNewUser(event) {
   };
 
   if (role === 'driver') {
+    userData.driverId = document.getElementById('newDriverId').value.trim();
     userData.busNumber = document.getElementById('newBusNumber').value.trim();
     userData.regNumber = document.getElementById('newRegNumber').value.trim();
   } else {
@@ -269,7 +376,6 @@ function initAdminDashboard() {
 
   setupRealtimeListeners();
 
-  // Listen to Emergency Alerts for Admin
   db.ref('liveBus/emergencies').on('value', (snapshot) => {
     const emergencies = snapshot.val();
     const container = document.getElementById('adminEmergencyContainer');
@@ -291,7 +397,6 @@ function initAdminDashboard() {
     }
   });
 
-  // Track All Buses
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const activeCountEl = document.getElementById('activeBusesCount');
@@ -299,7 +404,7 @@ function initAdminDashboard() {
 
     if (!buses) {
       if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
-      if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No active buses broadcasting right now.</td></tr>';
+      if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No active buses broadcasting.</td></tr>';
       Object.keys(adminBusMarkers).forEach(key => adminMap.removeLayer(adminBusMarkers[key]));
       adminBusMarkers = {};
       return;
@@ -386,7 +491,7 @@ function fetchAndRenderData() {
         } else {
           Object.keys(drivers).forEach((username) => {
             const user = drivers[username];
-            userTableBody.innerHTML += `<tr class="border-b hover:bg-gray-50 text-sm"><td class="p-3"><span class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded text-xs">DRIVER</span></td><td class="p-3 font-medium text-gray-800">${user.name}</td><td class="p-3 text-gray-600">Bus: <b>${user.busNumber || 'N/A'}</b> | Reg: ${user.regNumber || 'N/A'}</td><td class="p-3 font-medium text-indigo-600">${user.route}</td><td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td></tr>`;
+            userTableBody.innerHTML += `<tr class="border-b hover:bg-gray-50 text-sm"><td class="p-3"><span class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded text-xs">DRIVER</span></td><td class="p-3 font-medium text-gray-800">${user.name}</td><td class="p-3 text-gray-600">ID: <b>${user.driverId || 'N/A'}</b> | Bus: <b>${user.busNumber || 'N/A'}</b></td><td class="p-3 font-medium text-indigo-600">${user.route}</td><td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td></tr>`;
           });
           Object.keys(students).forEach((username) => {
             const user = students[username];
@@ -401,7 +506,7 @@ function fetchAndRenderData() {
           const user = drivers[username];
           const isPresent = driverAtt[username] && driverAtt[username].status === "Present";
           const badge = isPresent ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold">Present ✅</span>' : '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">Absent ❌</span>';
-          driverTableBody.innerHTML += `<tr class="border-b"><td class="p-2.5 font-medium">${user.name}</td><td class="p-2.5 text-indigo-600 font-bold">${user.busNumber || 'N/A'}</td><td class="p-2.5">${badge}</td></tr>`;
+          driverTableBody.innerHTML += `<tr class="border-b"><td class="p-2.5 font-medium">${user.name}</td><td class="p-2.5 text-indigo-600 font-bold">${user.driverId || username} (Bus: ${user.busNumber || 'N/A'})</td><td class="p-2.5">${badge}</td></tr>`;
         });
       }
 
@@ -458,6 +563,7 @@ let watchId = null;
 function initDriverDashboard(userData) {
   if (userData) {
     if (document.getElementById('driverNameDisplay')) document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
+    if (document.getElementById('driverIdDisplay')) document.getElementById('driverIdDisplay').innerText = userData.driverId || "N/A";
     if (document.getElementById('driverBusNumberDisplay')) document.getElementById('driverBusNumberDisplay').innerText = userData.busNumber || "N/A";
     if (document.getElementById('driverRouteDisplay')) document.getElementById('driverRouteDisplay').innerText = userData.route || "Default Route";
   }
@@ -511,7 +617,7 @@ function initDriverDashboard(userData) {
 }
 
 // ==========================================
-// STUDENT DASHBOARD & ARRIVAL TIME (ETA)
+// STUDENT DASHBOARD & ATTENDANCE HISTORY
 // ==========================================
 let studentMap = null;
 let studentBusMarker = null;
@@ -524,6 +630,7 @@ function initStudentDashboard(userData) {
   }
 
   checkMyAttendanceStatus('student');
+  loadStudentAttendanceHistory();
 
   if (!studentMap && document.getElementById('studentMap')) {
     studentMap = L.map('studentMap').setView([28.6139, 77.2090], 13);
@@ -569,9 +676,7 @@ function initStudentDashboard(userData) {
       }
       studentMap.setView([lat, lng], 15);
 
-      // Estimated Arrival Time calculation logic (Rough mockup based on speed or distance)
       if (etaDisplay) {
-        // Dummy calculation for demonstration: e.g. ~5-15 mins based on active tracking
         const randomEta = Math.floor(Math.random() * 10) + 3; 
         etaDisplay.innerText = `Bus ETA: ~${randomEta} mins (${busNo})`;
       }
