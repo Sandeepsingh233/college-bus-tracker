@@ -45,9 +45,18 @@
             <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-md">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Admin Control Panel</h1>
-                    <p class="text-sm text-gray-500">Manage users, track live buses, force-stop stuck broadcasts, and monitor attendance</p>
+                    <p class="text-sm text-gray-500">Manage fleet, emergency alerts, attendance, and live tracking</p>
                 </div>
                 <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 text-sm">Logout</button>
+            </div>
+
+            <!-- Emergency Alerts Section for Admin -->
+            <div id="adminEmergencyContainer" class="hidden bg-red-600 text-white p-4 rounded-xl shadow-lg border-2 border-red-700 animate-pulse">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold flex items-center gap-2">🚨 EMERGENCY ALERT RECEIVED!</h2>
+                    <button onclick="clearEmergencyAlerts()" class="bg-white text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-gray-100">Dismiss Alerts</button>
+                </div>
+                <div id="adminEmergencyList" class="mt-2 text-sm space-y-1"></div>
             </div>
 
             <!-- Live All Buses Map Section -->
@@ -61,14 +70,13 @@
 
             <!-- Active Fleet Force Stop Section -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Active Fleet Control (Force Stop Stuck Buses)</h2>
-                <p class="text-xs text-gray-500 mb-4">Yahan aapko woh saari buses dikhengi jinka broadcast active hai. Agar koi driver location off karna bhul jaye, toh aap yahan se Force Stop kar sakte hain.</p>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Active Fleet Control (Force Stop Buses)</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-gray-100 text-gray-700">
+                                <th class="p-3 border-b">Bus Number</th>
                                 <th class="p-3 border-b">Driver Username</th>
-                                <th class="p-3 border-b">Driver Name</th>
                                 <th class="p-3 border-b">Route</th>
                                 <th class="p-3 border-b">Speed</th>
                                 <th class="p-3 border-b">Action</th>
@@ -99,8 +107,8 @@
                             <table class="w-full text-left text-sm bg-white rounded-lg overflow-hidden border">
                                 <thead class="bg-blue-50 text-blue-900">
                                     <tr>
-                                        <th class="p-2.5 border-b">Driver Name</th>
-                                        <th class="p-2.5 border-b">Username</th>
+                                        <th class="p-2.5 border-b">Name</th>
+                                        <th class="p-2.5 border-b">Bus No</th>
                                         <th class="p-2.5 border-b">Status</th>
                                     </tr>
                                 </thead>
@@ -118,13 +126,14 @@
                             <table class="w-full text-left text-sm bg-white rounded-lg overflow-hidden border">
                                 <thead class="bg-green-50 text-green-900">
                                     <tr>
-                                        <th class="p-2.5 border-b">Student Name</th>
-                                        <th class="p-2.5 border-b">Username</th>
+                                        <th class="p-2.5 border-b">Name</th>
+                                        <th class="p-2.5 border-b">Student ID</th>
+                                        <th class="p-2.5 border-b">Course</th>
                                         <th class="p-2.5 border-b">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="adminStudentAttendanceBody">
-                                    <tr><td colspan="3" class="p-3 text-center text-gray-500">Loading...</td></tr>
+                                    <tr><td colspan="4" class="p-3 text-center text-gray-500">Loading...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -132,11 +141,11 @@
                 </div>
             </div>
 
-            <!-- Send Warning / Broadcast Notice Form -->
+            <!-- Send Warning Form -->
             <form id="warningForm" onsubmit="sendWarning(event)" class="space-y-4 bg-white p-6 rounded-xl shadow-md border-l-4 border-amber-500">
                 <h2 class="text-lg font-semibold text-gray-800">Send Broadcast Warning / Notice</h2>
                 <div>
-                    <textarea id="warningMessage" required rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500" placeholder="Type emergency warning or notice for drivers and students..."></textarea>
+                    <textarea id="warningMessage" required rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-amber-500" placeholder="Type emergency warning..."></textarea>
                 </div>
                 <div class="flex gap-4">
                     <button type="submit" class="bg-amber-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-amber-700 transition text-sm">Broadcast Warning</button>
@@ -150,7 +159,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Account Type</label>
-                        <select id="newRole" class="w-full border border-gray-300 rounded-lg p-2.5">
+                        <select id="newRole" onchange="toggleUserFields()" class="w-full border border-gray-300 rounded-lg p-2.5">
                             <option value="driver">Driver</option>
                             <option value="student">Student</option>
                         </select>
@@ -160,7 +169,7 @@
                         <input type="text" id="newName" required class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. Rahul Kumar">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Username / ID</label>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
                         <input type="text" id="newUsername" required class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. driver_01">
                     </div>
                     <div>
@@ -169,31 +178,52 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700">Assigned Route</label>
-                        <input type="text" id="newRoute" required class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. Route 12 - Campus to City Center">
+                        <input type="text" id="newRoute" required class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. Route 12 - Campus to City">
+                    </div>
+
+                    <!-- Driver Specific Fields -->
+                    <div id="driverFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Bus Number</label>
+                            <input type="text" id="newBusNumber" class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. BUS-102">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Registration Number</label>
+                            <input type="text" id="newRegNumber" class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. DL-01-AB-1234">
+                        </div>
+                    </div>
+
+                    <!-- Student Specific Fields -->
+                    <div id="studentFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4" style="display: none;">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Student ID</label>
+                            <input type="text" id="newStudentId" class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. STU-2026-001">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Course</label>
+                            <input type="text" id="newCourse" class="w-full border border-gray-300 rounded-lg p-2.5" placeholder="e.g. B.Tech Computer Science">
+                        </div>
                     </div>
                 </div>
                 <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 rounded-lg hover:bg-green-700 transition">Create User</button>
             </form>
 
-            <!-- Live Users & Routes Table -->
+            <!-- Registered Users Table -->
             <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Registered Users & Routes</h2>
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Registered Users & Fleet Info</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-100 text-gray-700 text-sm">
                                 <th class="p-3 border-b">Role</th>
                                 <th class="p-3 border-b">Name</th>
-                                <th class="p-3 border-b">Username</th>
-                                <th class="p-3 border-b">Password</th>
-                                <th class="p-3 border-b">Assigned Route</th>
+                                <th class="p-3 border-b">Details (Bus/ID/Course)</th>
+                                <th class="p-3 border-b">Route</th>
                                 <th class="p-3 border-b">Action</th>
                             </tr>
                         </thead>
                         <tbody id="userTableBody">
-                            <tr>
-                                <td colspan="6" class="p-4 text-center text-gray-500">Loading users...</td>
-                            </tr>
+                            <tr><td colspan="5" class="p-4 text-center text-gray-500">Loading users...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -204,30 +234,31 @@
     <!-- ==================== DRIVER DASHBOARD ==================== -->
     <div id="driverDashboard" style="display: none;" class="min-h-screen p-6 bg-gray-50 flex items-center justify-center">
         <div class="max-w-md w-full bg-white p-6 rounded-xl shadow-md space-y-4">
-            <!-- Warning Banner for Driver -->
             <div id="driverWarningBanner" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm font-semibold">
                 ⚠️ <span id="driverWarningText"></span>
             </div>
             
             <h1 class="text-2xl font-bold text-gray-800 text-center">Driver Panel</h1>
             
-            <!-- Attendance Section for Driver -->
+            <!-- Attendance Section -->
             <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-center space-y-2">
                 <h3 class="font-bold text-blue-800 text-sm">Daily Attendance</h3>
-                <p id="driverAttendanceStatusText" class="text-xs text-gray-600">Checking status for today...</p>
-                <button id="markDriverAttendanceBtn" onclick="markAttendance('driver')" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-xs hover:bg-blue-700 transition">Mark Today's Attendance</button>
+                <p id="driverAttendanceStatusText" class="text-xs text-gray-600">Checking status...</p>
+                <button id="markDriverAttendanceBtn" onclick="markAttendance('driver')" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-xs hover:bg-blue-700 transition">Mark Attendance</button>
             </div>
 
             <div class="space-y-3 bg-gray-100 p-4 rounded-lg text-left text-sm font-mono text-gray-700">
                 <p><strong>Driver:</strong> <span id="driverNameDisplay">-</span></p>
+                <p><strong>Bus Number:</strong> <span id="driverBusNumberDisplay" class="text-indigo-600 font-bold">-</span></p>
                 <p><strong>Route:</strong> <span id="driverRouteDisplay">-</span></p>
-                <p><strong>Latitude:</strong> <span id="latDisplay">0.0000</span></p>
-                <p><strong>Longitude:</strong> <span id="lngDisplay">0.0000</span></p>
                 <p><strong>Speed:</strong> <span id="speedDisplay">0.0 km/h</span></p>
             </div>
+
             <div class="space-y-3">
                 <button id="startBtn" class="w-full bg-green-600 text-white font-semibold py-2.5 rounded-lg hover:bg-green-700 text-sm">Start Broadcast</button>
                 <button id="stopBtn" class="w-full bg-red-600 text-white font-semibold py-2.5 rounded-lg hover:bg-red-700 text-sm">Stop Broadcast</button>
+                <!-- Emergency Alert Button -->
+                <button onclick="sendEmergencyAlert()" class="w-full bg-red-700 text-white font-bold py-2.5 rounded-lg hover:bg-red-800 text-sm animate-pulse">🚨 Send Emergency Alert to Admin</button>
                 <button onclick="location.reload()" class="w-full bg-gray-600 text-white font-semibold py-2.5 rounded-lg hover:bg-gray-700 text-sm mt-2">Logout</button>
             </div>
         </div>
@@ -240,17 +271,18 @@
             <button onclick="location.reload()" class="bg-red-500 px-3 py-1 rounded text-sm font-semibold hover:bg-red-600">Logout</button>
         </header>
         
-        <!-- Warning Banner for Student -->
         <div id="studentWarningBanner" class="hidden bg-red-500 text-white px-4 py-2 text-center text-sm font-semibold shadow-inner">
             ⚠️ <span id="studentWarningText"></span>
         </div>
 
-        <!-- Top Bar for Student Attendance -->
-        <div class="bg-white p-3 shadow-sm border-b flex justify-between items-center px-6">
+        <!-- Top Bar for Student Info & Attendance -->
+        <div class="bg-white p-3 shadow-sm border-b flex flex-wrap justify-between items-center px-6 gap-2">
             <div>
                 <span class="font-bold text-gray-700 text-sm">Welcome, <span id="studentNameDisplay">-</span></span>
+                <span class="text-xs text-gray-500 ml-2">| ID: <span id="studentIdDisplay">-</span> | Course: <span id="studentCourseDisplay">-</span></span>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
+                <span id="busArrivalTimeDisplay" class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded text-xs font-bold border border-indigo-200">Bus ETA: Calculating...</span>
                 <span id="studentAttendanceStatusText" class="text-xs text-gray-500 font-medium">Attendance: Not Marked</span>
                 <button id="markStudentAttendanceBtn" onclick="markAttendance('student')" class="bg-green-600 text-white font-semibold px-4 py-1.5 rounded-lg text-xs hover:bg-green-700 transition shadow">Mark Attendance</button>
             </div>
@@ -259,7 +291,7 @@
         <div id="studentMap" class="flex-grow w-full h-[calc(100vh-120px)]"></div>
     </div>
 
-    <!-- Firebase SDKs (Compat) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <!-- Leaflet JS -->
