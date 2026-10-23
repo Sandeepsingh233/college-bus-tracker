@@ -237,10 +237,16 @@ function checkMyAttendanceStatus(role) {
       const statusText = document.getElementById('studentAttendanceStatusText');
       const btn = document.getElementById('markStudentAttendanceBtn');
       if (data && data.status === "Present") {
-        if (statusText) statusText.innerText = "Attendance: Present ✅";
-        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.style.opacity = '0.5'; }
+        if (statusText) {
+          statusText.innerText = "Attendance: Present ✅";
+          statusText.className = "text-xs font-bold text-emerald-400";
+        }
+        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-blue-600', 'bg-slate-700'); }
       } else {
-        if (statusText) statusText.innerText = "Attendance: Absent ❌";
+        if (statusText) {
+          statusText.innerText = "Attendance: Absent ❌";
+          statusText.className = "text-xs font-bold text-red-400";
+        }
       }
     }
   });
@@ -264,9 +270,9 @@ function loadStudentAttendanceHistory() {
       if (dayRecords && dayRecords[username]) {
         hasRecords = true;
         historyBody.innerHTML += `
-          <tr class="border-b border-slate-200">
-            <td class="p-2.5 font-bold text-slate-800">${date}</td>
-            <td class="p-2.5 text-emerald-700 font-extrabold">Present ✅</td>
+          <tr class="border-b border-slate-800">
+            <td class="p-2.5 font-bold text-slate-300">${date}</td>
+            <td class="p-2.5 text-emerald-400 font-extrabold">Present ✅</td>
           </tr>
         `;
       }
