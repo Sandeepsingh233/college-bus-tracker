@@ -24,7 +24,17 @@ const ADMIN_CREDENTIALS = {
   password: "Sandeep09@" 
 };
 
-let currentDriver = null;
+let currentUserData = null;
+let currentRole = null;
+
+// Helper to get today's date string (YYYY-MM-DD)
+function getTodayDateString() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 // ==========================================
 // LOGIN HANDLER
@@ -53,7 +63,8 @@ async function handleLogin(event) {
     const userData = snapshot.val();
     
     if (userData && userData.password === password) {
-      currentDriver = userData;
+      currentUserData = userData;
+      currentRole = "driver";
       showDashboard("driver", userData);
     } else {
       alert("Driver username ya password galat hai!");
@@ -64,6 +75,8 @@ async function handleLogin(event) {
     const userData = snapshot.val();
     
     if (userData && userData.password === password) {
+      currentUserData = userData;
+      currentRole = "student";
       showDashboard("student", userData);
     } else {
       alert("Student username ya password galat hai!");
@@ -89,10 +102,60 @@ function showDashboard(role, userData = null) {
   } else if (role === 'student') {
     const studentDash = document.getElementById('studentDashboard');
     if (studentDash) studentDash.style.display = 'block';
-    initStudentDashboard();
+    initStudentDashboard(userData);
   }
   
   listenForWarnings();
+}
+
+// ==========================================
+// ATTENDANCE MARKING LOGIC (Driver & Student)
+// ==========================================
+function markAttendance(role) {
+  if (!currentUserData) return;
+  const today = getTodayDateString();
+  const username = currentUserData.username;
+
+  db.ref(`attendance/${role}s/${today}/${username}`).set({
+    username: username,
+    name: currentUserData.name,
+    status: "Present",
+    timestamp: Date.now()
+  }).then(() => {
+    alert("Aapki attendance successfully mark ho gayi hai!");
+    checkMyAttendanceStatus(role);
+  }).catch((error) => {
+    alert("Error marking attendance: " + error.message);
+  });
+}
+
+function checkMyAttendanceStatus(role) {
+  if (!currentUserData) return;
+  const today = getTodayDateString();
+  const username = currentUserData.username;
+
+  db.ref(`attendance/${role}s/${today}/${username}`).on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (role === 'driver') {
+      const statusText = document.getElementById('driverAttendanceStatusText');
+      const btn = document.getElementById('markDriverAttendanceBtn');
+      if (data && data.status === "Present") {
+        if (statusText) statusText.innerText = "Status: Present Today ✅";
+        if (btn) { btn.innerText = "Attendance Marked"; btn.disabled = true; btn.classList.replace('bg-blue-600', 'bg-gray-400'); }
+      } else {
+        if (statusText) statusText.innerText = "Status: Not Marked Yet ❌";
+      }
+    } else if (role === 'student') {
+      const statusText = document.getElementById('studentAttendanceStatusText');
+      const btn = document.getElementById('markStudentAttendanceBtn');
+      if (data && data.status === "Present") {
+        if (statusText) statusText.innerText = "Attendance: Present ✅";
+        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-green-600', 'bg-gray-400'); }
+      } else {
+        if (statusText) statusText.innerText = "Attendance: Absent ❌";
+      }
+    }
+  });
 }
 
 // ==========================================
@@ -137,13 +200,19 @@ function deleteUser(role, username) {
 }
 
 // ==========================================
-// ADMIN DASHBOARD: MULTI-BUS LIVE MAP
+// ADMIN DASHBOARD: MULTI-BUS LIVE MAP & ATTENDANCE
 // ==========================================
 let adminMap = null;
 let adminBusMarkers = {};
 
 function initAdminDashboard() {
-  // Initialize Admin Leaflet Map if not initialized
+  // Set default date picker value to today
+  const dateFilter = document.getElementById('attendanceDateFilter');
+  if (dateFilter && !dateFilter.value) {
+    dateFilter.value = getTodayDateString();
+  }
+
+  // Initialize Admin Leaflet Map
   if (!adminMap && document.getElementById('adminMap')) {
     adminMap = L.map('adminMap').setView([28.6139, 77.2090], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -151,61 +220,21 @@ function initAdminDashboard() {
     }).addTo(adminMap);
   }
 
-  // 1. Registered Users Table
-  const tableBody = document.getElementById('userTableBody');
-  db.ref('users').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (!tableBody) return;
-    tableBody.innerHTML = '';
+  // Load Users Table & Attendance
+  loadAdminAttendance();
 
-    if (!data || (!data.drivers && !data.students)) {
-      tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Koi user add nahi hua hai abhi tak.</td></tr>';
-      return;
-    }
-
-    if (data.drivers) {
-      Object.keys(data.drivers).forEach((username) => {
-        const user = data.drivers[username];
-        tableBody.innerHTML += `
-          <tr class="border-b hover:bg-gray-50 text-sm">
-            <td class="p-3"><span class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded text-xs">DRIVER</span></td>
-            <td class="p-3 font-medium text-gray-800">${user.name || '-'}</td>
-            <td class="p-3 text-gray-600">${user.username}</td>
-            <td class="p-3 text-gray-600">${user.password}</td>
-            <td class="p-3 font-medium text-indigo-600">${user.route || '-'}</td>
-            <td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td>
-          </tr>
-        `;
-      });
-    }
-
-    if (data.students) {
-      Object.keys(data.students).forEach((username) => {
-        const user = data.students[username];
-        tableBody.innerHTML += `
-          <tr class="border-b hover:bg-gray-50 text-sm">
-            <td class="p-3"><span class="bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded text-xs">STUDENT</span></td>
-            <td class="p-3 font-medium text-gray-800">${user.name || '-'}</td>
-            <td class="p-3 text-gray-600">${user.username}</td>
-            <td class="p-3 text-gray-600">${user.password}</td>
-            <td class="p-3 font-medium text-indigo-600">${user.route || '-'}</td>
-            <td class="p-3"><button onclick="deleteUser('student', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td>
-          </tr>
-        `;
-      });
-    }
+  db.ref('users').on('value', () => {
+    loadAdminAttendance();
   });
 
-  // 2. Track All Buses Simultaneously on Admin Map
+  // Track All Buses Simultaneously on Admin Map
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const activeCountEl = document.getElementById('activeBusesCount');
 
     if (!buses) {
       if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
-      Object.keys(adminBusMarkers).forEach(key => {
-        adminMap.removeLayer(adminBusMarkers[key]);
-      });
+      Object.keys(adminBusMarkers).forEach(key => adminMap.removeLayer(adminBusMarkers[key]));
       adminBusMarkers = {};
       return;
     }
@@ -214,7 +243,6 @@ function initAdminDashboard() {
     if (activeCountEl) activeCountEl.innerText = `${activeKeys.length} Active Bus${activeKeys.length > 1 ? 'es' : ''}`;
 
     const bounds = [];
-
     activeKeys.forEach((driverKey) => {
       const bus = buses[driverKey];
       if (bus && bus.lat && bus.lng) {
@@ -222,17 +250,11 @@ function initAdminDashboard() {
         const lng = bus.lng;
         const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
         const route = bus.route || "College Bus Route";
-        const driverName = bus.driverName || bus.driver || driverKey;
+        const driverName = bus.driverName || bus.driver;
 
         bounds.push([lat, lng]);
 
-        const popupText = `
-          <div class="text-sm">
-            <h3 class="font-bold text-indigo-600">${route}</h3>
-            <p><strong>Driver:</strong> ${driverName}</p>
-            <p><strong>Speed:</strong> ${speed} km/h</p>
-          </div>
-        `;
+        const popupText = `<div class="text-sm"><h3 class="font-bold text-indigo-600">${route}</h3><p><strong>Driver:</strong> ${driverName}</p><p><strong>Speed:</strong> ${speed} km/h</p></div>`;
 
         if (!adminBusMarkers[driverKey]) {
           adminBusMarkers[driverKey] = L.marker([lat, lng]).addTo(adminMap).bindPopup(popupText);
@@ -243,7 +265,6 @@ function initAdminDashboard() {
       }
     });
 
-    // Remove inactive buses from map
     Object.keys(adminBusMarkers).forEach(key => {
       if (!buses[key]) {
         adminMap.removeLayer(adminBusMarkers[key]);
@@ -251,10 +272,82 @@ function initAdminDashboard() {
       }
     });
 
-    // Auto fit map bounds to show all active buses
     if (bounds.length > 0 && adminMap) {
       adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
+  });
+}
+
+// Load Attendance data for Admin Panel
+function loadAdminAttendance() {
+  const dateFilter = document.getElementById('attendanceDateFilter');
+  const selectedDate = dateFilter ? dateFilter.value : getTodayDateString();
+
+  const driverTableBody = document.getElementById('adminDriverAttendanceBody');
+  const studentTableBody = document.getElementById('adminStudentAttendanceBody');
+  const userTableBody = document.getElementById('userTableBody');
+
+  db.ref('users').once('value', (userSnapshot) => {
+    const usersData = userSnapshot.val() || {};
+    const drivers = usersData.drivers || {};
+    const students = usersData.students || {};
+
+    db.ref(`attendance`).once('value', (attSnapshot) => {
+      const attData = attSnapshot.val() || {};
+      const driverAtt = (attData.drivers && attData.drivers[selectedDate]) || {};
+      const studentAtt = (attData.students && attData.students[selectedDate]) || {};
+
+      // 1. Render Registered Users Table
+      if (userTableBody) {
+        userTableBody.innerHTML = '';
+        if (Object.keys(drivers).length === 0 && Object.keys(students).length === 0) {
+          userTableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Koi user add nahi hua hai abhi tak.</td></tr>';
+        } else {
+          Object.keys(drivers).forEach((username) => {
+            const user = drivers[username];
+            userTableBody.innerHTML += `<tr class="border-b hover:bg-gray-50 text-sm"><td class="p-3"><span class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded text-xs">DRIVER</span></td><td class="p-3 font-medium text-gray-800">${user.name}</td><td class="p-3 text-gray-600">${user.username}</td><td class="p-3 text-gray-600">${user.password}</td><td class="p-3 font-medium text-indigo-600">${user.route}</td><td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td></tr>`;
+          });
+          Object.keys(students).forEach((username) => {
+            const user = students[username];
+            userTableBody.innerHTML += `<tr class="border-b hover:bg-gray-50 text-sm"><td class="p-3"><span class="bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded text-xs">STUDENT</span></td><td class="p-3 font-medium text-gray-800">${user.name}</td><td class="p-3 text-gray-600">${user.username}</td><td class="p-3 text-gray-600">${user.password}</td><td class="p-3 font-medium text-indigo-600">${user.route}</td><td class="p-3"><button onclick="deleteUser('student', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td></tr>`;
+          });
+        }
+      }
+
+      // 2. Render Driver Attendance Table
+      if (driverTableBody) {
+        driverTableBody.innerHTML = '';
+        if (Object.keys(drivers).length === 0) {
+          driverTableBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-gray-500">No drivers registered.</td></tr>';
+        } else {
+          Object.keys(drivers).forEach((username) => {
+            const user = drivers[username];
+            const isPresent = driverAtt[username] && driverAtt[username].status === "Present";
+            const badge = isPresent 
+              ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold">Present ✅</span>' 
+              : '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">Absent ❌</span>';
+            driverTableBody.innerHTML += `<tr class="border-b"><td class="p-2.5 font-medium">${user.name}</td><td class="p-2.5 text-gray-600">${username}</td><td class="p-2.5">${badge}</td></tr>`;
+          });
+        }
+      }
+
+      // 3. Render Student Attendance Table
+      if (studentTableBody) {
+        studentTableBody.innerHTML = '';
+        if (Object.keys(students).length === 0) {
+          studentTableBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-gray-500">No students registered.</td></tr>';
+        } else {
+          Object.keys(students).forEach((username) => {
+            const user = students[username];
+            const isPresent = studentAtt[username] && studentAtt[username].status === "Present";
+            const badge = isPresent 
+              ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold">Present ✅</span>' 
+              : '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">Absent ❌</span>';
+            studentTableBody.innerHTML += `<tr class="border-b"><td class="p-2.5 font-medium">${user.name}</td><td class="p-2.5 text-gray-600">${username}</td><td class="p-2.5">${badge}</td></tr>`;
+          });
+        }
+      }
+    });
   });
 }
 
@@ -267,7 +360,7 @@ function sendWarning(event) {
   if (!msg) return;
 
   db.ref('liveBus/warning').set(msg).then(() => {
-    alert("Warning successfully broadcasted to all drivers and students!");
+    alert("Warning successfully broadcasted!");
     document.getElementById('warningForm').reset();
   });
 }
@@ -281,21 +374,14 @@ function clearWarning() {
 function listenForWarnings() {
   db.ref('liveBus/warning').on('value', (snapshot) => {
     const warningMsg = snapshot.val();
-    
     const driverBanner = document.getElementById('driverWarningBanner');
     const driverText = document.getElementById('driverWarningText');
     const studentBanner = document.getElementById('studentWarningBanner');
     const studentText = document.getElementById('studentWarningText');
 
     if (warningMsg) {
-      if (driverBanner && driverText) {
-        driverText.innerText = warningMsg;
-        driverBanner.classList.remove('hidden');
-      }
-      if (studentBanner && studentText) {
-        studentText.innerText = warningMsg;
-        studentBanner.classList.remove('hidden');
-      }
+      if (driverBanner && driverText) { driverText.innerText = warningMsg; driverBanner.classList.remove('hidden'); }
+      if (studentBanner && studentText) { studentText.innerText = warningMsg; studentBanner.classList.remove('hidden'); }
     } else {
       if (driverBanner) driverBanner.classList.add('hidden');
       if (studentBanner) studentBanner.classList.add('hidden');
@@ -313,6 +399,8 @@ function initDriverDashboard(userData) {
     if (document.getElementById('driverNameDisplay')) document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
     if (document.getElementById('driverRouteDisplay')) document.getElementById('driverRouteDisplay').innerText = userData.route || "Default Route";
   }
+
+  checkMyAttendanceStatus('driver');
 
   const startBtn = document.getElementById('startBtn');
   const stopBtn = document.getElementById('stopBtn');
@@ -335,8 +423,6 @@ function initDriverDashboard(userData) {
         if (document.getElementById('speedDisplay')) document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
 
         const driverId = userData ? userData.username : "driver_default";
-
-        // Save location per driver under `liveBus/buses/{driverId}`
         db.ref(`liveBus/buses/${driverId}`).set({
           lat: lat,
           lng: lng,
@@ -361,10 +447,8 @@ function initDriverDashboard(userData) {
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
-        
         const driverId = userData ? userData.username : "driver_default";
         db.ref(`liveBus/buses/${driverId}`).remove();
-        
         alert("Broadcast rok di gayi hai.");
       }
     };
@@ -377,7 +461,13 @@ function initDriverDashboard(userData) {
 let studentMap = null;
 let studentBusMarkers = {};
 
-function initStudentDashboard() {
+function initStudentDashboard(userData) {
+  if (userData) {
+    if (document.getElementById('studentNameDisplay')) document.getElementById('studentNameDisplay').innerText = userData.name || userData.username;
+  }
+
+  checkMyAttendanceStatus('student');
+
   if (!studentMap && document.getElementById('studentMap')) {
     studentMap = L.map('studentMap').setView([28.6139, 77.2090], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -403,7 +493,6 @@ function initStudentDashboard() {
         const driverName = bus.driverName || bus.driver;
 
         bounds.push([lat, lng]);
-
         const popupContent = `<b>${route}</b><br>Driver: ${driverName}`;
 
         if (!studentBusMarkers[driverKey]) {
