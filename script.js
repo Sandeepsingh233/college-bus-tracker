@@ -24,6 +24,8 @@ const ADMIN_CREDENTIALS = {
   password: "Sandeep09@" 
 };
 
+let currentDriver = null;
+
 // ==========================================
 // LOGIN HANDLER
 // ==========================================
@@ -39,7 +41,6 @@ async function handleLogin(event) {
     return;
   }
 
-  // 1. Admin Login Check
   if (role === "admin") {
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       showDashboard("admin");
@@ -47,18 +48,17 @@ async function handleLogin(event) {
       alert("Galat Admin credentials hain!");
     }
   } 
-  // 2. Driver Login Check
   else if (role === "driver") {
     const snapshot = await db.ref(`users/drivers/${username}`).once('value');
     const userData = snapshot.val();
     
     if (userData && userData.password === password) {
+      currentDriver = userData;
       showDashboard("driver", userData);
     } else {
       alert("Driver username ya password galat hai!");
     }
   } 
-  // 3. Student Login Check
   else if (role === "student") {
     const snapshot = await db.ref(`users/students/${username}`).once('value');
     const userData = snapshot.val();
@@ -92,7 +92,6 @@ function showDashboard(role, userData = null) {
     initStudentDashboard();
   }
   
-  // Listen globally for warnings on any dashboard
   listenForWarnings();
 }
 
@@ -138,15 +137,25 @@ function deleteUser(role, username) {
 }
 
 // ==========================================
-// ADMIN DASHBOARD INITIALIZATION & LIVE TRACKING
+// ADMIN DASHBOARD: MULTI-BUS LIVE MAP
 // ==========================================
-function initAdminDashboard() {
-  const tableBody = document.getElementById('userTableBody');
-  if (!tableBody) return;
+let adminMap = null;
+let adminBusMarkers = {};
 
-  // 1. Load Registered Users Table
+function initAdminDashboard() {
+  // Initialize Admin Leaflet Map if not initialized
+  if (!adminMap && document.getElementById('adminMap')) {
+    adminMap = L.map('adminMap').setView([28.6139, 77.2090], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(adminMap);
+  }
+
+  // 1. Registered Users Table
+  const tableBody = document.getElementById('userTableBody');
   db.ref('users').on('value', (snapshot) => {
     const data = snapshot.val();
+    if (!tableBody) return;
     tableBody.innerHTML = '';
 
     if (!data || (!data.drivers && !data.students)) {
@@ -187,19 +196,64 @@ function initAdminDashboard() {
     }
   });
 
-  // 2. Listen to Live Bus Location for Admin Card
-  db.ref('liveBus/location').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      document.getElementById('adminBusRoute').innerText = data.route || "Active Route";
-      document.getElementById('adminBusDriver').innerText = data.driver || "Driver";
-      document.getElementById('adminBusSpeed').innerText = (data.speed ? (data.speed * 3.6).toFixed(1) : "0.0") + " km/h";
-      document.getElementById('adminBusCoords').innerText = `${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`;
-    } else {
-      document.getElementById('adminBusRoute').innerText = "Not Active";
-      document.getElementById('adminBusDriver').innerText = "-";
-      document.getElementById('adminBusSpeed').innerText = "0.0 km/h";
-      document.getElementById('adminBusCoords').innerText = "0.00, 0.00";
+  // 2. Track All Buses Simultaneously on Admin Map
+  db.ref('liveBus/buses').on('value', (snapshot) => {
+    const buses = snapshot.val();
+    const activeCountEl = document.getElementById('activeBusesCount');
+
+    if (!buses) {
+      if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
+      Object.keys(adminBusMarkers).forEach(key => {
+        adminMap.removeLayer(adminBusMarkers[key]);
+      });
+      adminBusMarkers = {};
+      return;
+    }
+
+    const activeKeys = Object.keys(buses);
+    if (activeCountEl) activeCountEl.innerText = `${activeKeys.length} Active Bus${activeKeys.length > 1 ? 'es' : ''}`;
+
+    const bounds = [];
+
+    activeKeys.forEach((driverKey) => {
+      const bus = buses[driverKey];
+      if (bus && bus.lat && bus.lng) {
+        const lat = bus.lat;
+        const lng = bus.lng;
+        const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
+        const route = bus.route || "College Bus Route";
+        const driverName = bus.driverName || bus.driver || driverKey;
+
+        bounds.push([lat, lng]);
+
+        const popupText = `
+          <div class="text-sm">
+            <h3 class="font-bold text-indigo-600">${route}</h3>
+            <p><strong>Driver:</strong> ${driverName}</p>
+            <p><strong>Speed:</strong> ${speed} km/h</p>
+          </div>
+        `;
+
+        if (!adminBusMarkers[driverKey]) {
+          adminBusMarkers[driverKey] = L.marker([lat, lng]).addTo(adminMap).bindPopup(popupText);
+        } else {
+          adminBusMarkers[driverKey].setLatLng([lat, lng]);
+          adminBusMarkers[driverKey].setPopupContent(popupText);
+        }
+      }
+    });
+
+    // Remove inactive buses from map
+    Object.keys(adminBusMarkers).forEach(key => {
+      if (!buses[key]) {
+        adminMap.removeLayer(adminBusMarkers[key]);
+        delete adminBusMarkers[key];
+      }
+    });
+
+    // Auto fit map bounds to show all active buses
+    if (bounds.length > 0 && adminMap) {
+      adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
   });
 }
@@ -228,11 +282,8 @@ function listenForWarnings() {
   db.ref('liveBus/warning').on('value', (snapshot) => {
     const warningMsg = snapshot.val();
     
-    // Driver banner elements
     const driverBanner = document.getElementById('driverWarningBanner');
     const driverText = document.getElementById('driverWarningText');
-    
-    // Student banner elements
     const studentBanner = document.getElementById('studentWarningBanner');
     const studentText = document.getElementById('studentWarningText');
 
@@ -258,8 +309,9 @@ function listenForWarnings() {
 let watchId = null;
 
 function initDriverDashboard(userData) {
-  if(document.getElementById('driverRouteDisplay')) {
-    document.getElementById('driverRouteDisplay').innerText = userData.route || "Default Route";
+  if (userData) {
+    if (document.getElementById('driverNameDisplay')) document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
+    if (document.getElementById('driverRouteDisplay')) document.getElementById('driverRouteDisplay').innerText = userData.route || "Default Route";
   }
 
   const startBtn = document.getElementById('startBtn');
@@ -278,16 +330,20 @@ function initDriverDashboard(userData) {
         const lng = position.coords.longitude;
         const speed = position.coords.speed || 0;
 
-        if(document.getElementById('latDisplay')) document.getElementById('latDisplay').innerText = lat.toFixed(4);
-        if(document.getElementById('lngDisplay')) document.getElementById('lngDisplay').innerText = lng.toFixed(4);
-        if(document.getElementById('speedDisplay')) document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
+        if (document.getElementById('latDisplay')) document.getElementById('latDisplay').innerText = lat.toFixed(4);
+        if (document.getElementById('lngDisplay')) document.getElementById('lngDisplay').innerText = lng.toFixed(4);
+        if (document.getElementById('speedDisplay')) document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
 
-        db.ref('liveBus/location').set({
+        const driverId = userData ? userData.username : "driver_default";
+
+        // Save location per driver under `liveBus/buses/{driverId}`
+        db.ref(`liveBus/buses/${driverId}`).set({
           lat: lat,
           lng: lng,
           speed: speed,
-          driver: userData ? userData.username : "Driver",
-          route: userData ? userData.route : "Default Route",
+          driver: driverId,
+          driverName: userData ? userData.name : "Driver",
+          route: userData ? userData.route : "College Route",
           updatedAt: Date.now()
         });
       }, (error) => {
@@ -305,7 +361,10 @@ function initDriverDashboard(userData) {
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
-        db.ref('liveBus/location').remove(); // Remove live location when stopped
+        
+        const driverId = userData ? userData.username : "driver_default";
+        db.ref(`liveBus/buses/${driverId}`).remove();
+        
         alert("Broadcast rok di gayi hai.");
       }
     };
@@ -313,33 +372,58 @@ function initDriverDashboard(userData) {
 }
 
 // ==========================================
-// STUDENT MAP TRACKING LOGIC (Leaflet.js)
+// STUDENT MAP TRACKING LOGIC
 // ==========================================
+let studentMap = null;
+let studentBusMarkers = {};
+
 function initStudentDashboard() {
-  const mapElement = document.getElementById('map');
-  if (!mapElement) return;
+  if (!studentMap && document.getElementById('studentMap')) {
+    studentMap = L.map('studentMap').setView([28.6139, 77.2090], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(studentMap);
+  }
 
-  const map = L.map('map').setView([28.6139, 77.2090], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  db.ref('liveBus/buses').on('value', (snapshot) => {
+    const buses = snapshot.val();
+    if (!buses) {
+      Object.keys(studentBusMarkers).forEach(key => studentMap.removeLayer(studentBusMarkers[key]));
+      studentBusMarkers = {};
+      return;
+    }
 
-  let busMarker = null;
+    const bounds = [];
+    Object.keys(buses).forEach((driverKey) => {
+      const bus = buses[driverKey];
+      if (bus && bus.lat && bus.lng) {
+        const lat = bus.lat;
+        const lng = bus.lng;
+        const route = bus.route || "College Bus Route";
+        const driverName = bus.driverName || bus.driver;
 
-  db.ref('liveBus/location').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      const lat = data.lat;
-      const lng = data.lng;
-      const route = data.route || "Live Bus";
-      const driver = data.driver || "Driver";
+        bounds.push([lat, lng]);
 
-      if (!busMarker) {
-        busMarker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>${route}</b><br>Driver: ${driver}`).openPopup();
-      } else {
-        busMarker.setLatLng([lat, lng]);
+        const popupContent = `<b>${route}</b><br>Driver: ${driverName}`;
+
+        if (!studentBusMarkers[driverKey]) {
+          studentBusMarkers[driverKey] = L.marker([lat, lng]).addTo(studentMap).bindPopup(popupContent);
+        } else {
+          studentBusMarkers[driverKey].setLatLng([lat, lng]);
+          studentBusMarkers[driverKey].setPopupContent(popupContent);
+        }
       }
-      map.setView([lat, lng], 15);
+    });
+
+    Object.keys(studentBusMarkers).forEach(key => {
+      if (!buses[key]) {
+        studentMap.removeLayer(studentBusMarkers[key]);
+        delete studentBusMarkers[key];
+      }
+    });
+
+    if (bounds.length > 0 && studentMap) {
+      studentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
   });
 }
