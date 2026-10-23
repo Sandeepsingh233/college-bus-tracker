@@ -211,7 +211,6 @@ function initAdminDashboard() {
     dateFilter.value = getTodayDateString();
   }
 
-  // Initialize Admin Leaflet Map
   if (!adminMap && document.getElementById('adminMap')) {
     adminMap = L.map('adminMap').setView([28.6139, 77.2090], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -219,10 +218,8 @@ function initAdminDashboard() {
     }).addTo(adminMap);
   }
 
-  // Real-time listeners setup karenge taaki relogin na karna pade
   setupRealtimeAttendanceListener();
 
-  // Track All Buses Simultaneously on Admin Map
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const activeCountEl = document.getElementById('activeBusesCount');
@@ -272,7 +269,6 @@ function initAdminDashboard() {
   });
 }
 
-// Real-time Attendance Listener (Bina relogin ke live update ke liye)
 function setupRealtimeAttendanceListener() {
   const dateFilter = document.getElementById('attendanceDateFilter');
 
@@ -291,7 +287,6 @@ function setupRealtimeAttendanceListener() {
   }
 }
 
-// Fetch and Render Attendance Data
 function fetchAndRenderAttendanceData() {
   const dateFilter = document.getElementById('attendanceDateFilter');
   const selectedDate = dateFilter ? dateFilter.value : getTodayDateString();
@@ -310,7 +305,6 @@ function fetchAndRenderAttendanceData() {
       const driverAtt = (attData.drivers && attData.drivers[selectedDate]) || {};
       const studentAtt = (attData.students && attData.students[selectedDate]) || {};
 
-      // 1. Render Registered Users Table
       if (userTableBody) {
         userTableBody.innerHTML = '';
         if (Object.keys(drivers).length === 0 && Object.keys(students).length === 0) {
@@ -327,7 +321,6 @@ function fetchAndRenderAttendanceData() {
         }
       }
 
-      // 2. Render Driver Attendance Table
       if (driverTableBody) {
         driverTableBody.innerHTML = '';
         if (Object.keys(drivers).length === 0) {
@@ -344,7 +337,6 @@ function fetchAndRenderAttendanceData() {
         }
       }
 
-      // 3. Render Student Attendance Table
       if (studentTableBody) {
         studentTableBody.innerHTML = '';
         if (Object.keys(students).length === 0) {
@@ -469,14 +461,16 @@ function initDriverDashboard(userData) {
 }
 
 // ==========================================
-// STUDENT MAP TRACKING LOGIC
+// STUDENT MAP TRACKING LOGIC (ALLOCATED ROUTE FILTER)
 // ==========================================
 let studentMap = null;
 let studentBusMarkers = {};
 
 function initStudentDashboard(userData) {
   if (userData) {
-    if (document.getElementById('studentNameDisplay')) document.getElementById('studentNameDisplay').innerText = userData.name || userData.username;
+    if (document.getElementById('studentNameDisplay')) {
+      document.getElementById('studentNameDisplay').innerText = `${userData.name || userData.username} (${userData.route || 'No Route'})`;
+    }
   }
 
   checkMyAttendanceStatus('student');
@@ -488,6 +482,8 @@ function initStudentDashboard(userData) {
     }).addTo(studentMap);
   }
 
+  const studentAllocatedRoute = (userData && userData.route) ? userData.route.trim().toLowerCase() : "";
+
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     if (!buses) {
@@ -497,28 +493,38 @@ function initStudentDashboard(userData) {
     }
 
     const bounds = [];
+    const activeRouteKeys = [];
+
     Object.keys(buses).forEach((driverKey) => {
       const bus = buses[driverKey];
       if (bus && bus.lat && bus.lng) {
-        const lat = bus.lat;
-        const lng = bus.lng;
-        const route = bus.route || "College Bus Route";
-        const driverName = bus.driverName || bus.driver;
+        const busRoute = (bus.route || "").trim().toLowerCase();
 
-        bounds.push([lat, lng]);
-        const popupContent = `<b>${route}</b><br>Driver: ${driverName}`;
+        // SIRF TABHI SHOW KAREIN JAB ROUTE MATCH KARE YAA PEHLE SE KOI ROUTE ASSIGN NA HO
+        if (!studentAllocatedRoute || busRoute === studentAllocatedRoute || busRoute.includes(studentAllocatedRoute) || studentAllocatedRoute.includes(busRoute)) {
+          const lat = bus.lat;
+          const lng = bus.lng;
+          const route = bus.route || "College Bus Route";
+          const driverName = bus.driverName || bus.driver;
 
-        if (!studentBusMarkers[driverKey]) {
-          studentBusMarkers[driverKey] = L.marker([lat, lng]).addTo(studentMap).bindPopup(popupContent);
-        } else {
-          studentBusMarkers[driverKey].setLatLng([lat, lng]);
-          studentBusMarkers[driverKey].setPopupContent(popupContent);
+          bounds.push([lat, lng]);
+          activeRouteKeys.push(driverKey);
+
+          const popupContent = `<b>${route}</b><br>Driver: ${driverName}`;
+
+          if (!studentBusMarkers[driverKey]) {
+            studentBusMarkers[driverKey] = L.marker([lat, lng]).addTo(studentMap).bindPopup(popupContent);
+          } else {
+            studentBusMarkers[driverKey].setLatLng([lat, lng]);
+            studentBusMarkers[driverKey].setPopupContent(popupContent);
+          }
         }
       }
     });
 
+    // Remove any markers that do not match the student's route
     Object.keys(studentBusMarkers).forEach(key => {
-      if (!buses[key]) {
+      if (!activeRouteKeys.includes(key)) {
         studentMap.removeLayer(studentBusMarkers[key]);
         delete studentBusMarkers[key];
       }
