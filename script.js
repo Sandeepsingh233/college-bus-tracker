@@ -47,7 +47,7 @@ async function handleLogin(event) {
       alert("Galat Admin credentials hain!");
     }
   } 
-  // 2. Driver Login Check (Database se verify)
+  // 2. Driver Login Check
   else if (role === "driver") {
     const snapshot = await db.ref(`users/drivers/${username}`).once('value');
     const userData = snapshot.val();
@@ -58,7 +58,7 @@ async function handleLogin(event) {
       alert("Driver username ya password galat hai!");
     }
   } 
-  // 3. Student Login Check (Database se verify)
+  // 3. Student Login Check
   else if (role === "student") {
     const snapshot = await db.ref(`users/students/${username}`).once('value');
     const userData = snapshot.val();
@@ -75,11 +75,9 @@ async function handleLogin(event) {
 // DASHBOARD SWITCHER
 // ==========================================
 function showDashboard(role, userData = null) {
-  // Hide Login Section
   const loginSection = document.getElementById('loginSection');
   if (loginSection) loginSection.style.display = 'none';
 
-  // Show respective dashboard
   if (role === 'admin') {
     const adminDash = document.getElementById('adminDashboard');
     if (adminDash) adminDash.style.display = 'block';
@@ -93,15 +91,18 @@ function showDashboard(role, userData = null) {
     if (studentDash) studentDash.style.display = 'block';
     initStudentDashboard();
   }
+  
+  // Listen globally for warnings on any dashboard
+  listenForWarnings();
 }
 
 // ==========================================
-// ADMIN: ADD NEW USER (WITH ROUTE)
+// ADMIN: ADD & DELETE USERS
 // ==========================================
 function addNewUser(event) {
   if (event) event.preventDefault();
 
-  const role = document.getElementById('newRole').value; // 'driver' ya 'student'
+  const role = document.getElementById('newRole').value;
   const name = document.getElementById('newName').value.trim();
   const username = document.getElementById('newUsername').value.trim();
   const password = document.getElementById('newPassword').value.trim();
@@ -112,7 +113,6 @@ function addNewUser(event) {
     return;
   }
 
-  // Firebase Realtime Database mein save karna
   db.ref(`users/${role}s/${username}`).set({
     username: username,
     password: password,
@@ -127,24 +127,33 @@ function addNewUser(event) {
   });
 }
 
+function deleteUser(role, username) {
+  if (confirm(`Kya aap waqai ${username} (${role}) ko delete karna chahte hain?`)) {
+    db.ref(`users/${role}s/${username}`).remove().then(() => {
+      alert("User successfully delete ho gaya hai!");
+    }).catch((error) => {
+      alert("Error deleting user: " + error.message);
+    });
+  }
+}
+
 // ==========================================
-// ADMIN: LOAD USERS & ROUTES TABLE LIVE
+// ADMIN DASHBOARD INITIALIZATION & LIVE TRACKING
 // ==========================================
 function initAdminDashboard() {
   const tableBody = document.getElementById('userTableBody');
   if (!tableBody) return;
 
-  // Realtime database listener for users list
+  // 1. Load Registered Users Table
   db.ref('users').on('value', (snapshot) => {
     const data = snapshot.val();
-    tableBody.innerHTML = ''; // Purani rows clear karein
+    tableBody.innerHTML = '';
 
     if (!data || (!data.drivers && !data.students)) {
-      tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Koi user add nahi hua hai abhi tak.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Koi user add nahi hua hai abhi tak.</td></tr>';
       return;
     }
 
-    // 1. Render Drivers List
     if (data.drivers) {
       Object.keys(data.drivers).forEach((username) => {
         const user = data.drivers[username];
@@ -155,12 +164,12 @@ function initAdminDashboard() {
             <td class="p-3 text-gray-600">${user.username}</td>
             <td class="p-3 text-gray-600">${user.password}</td>
             <td class="p-3 font-medium text-indigo-600">${user.route || '-'}</td>
+            <td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td>
           </tr>
         `;
       });
     }
 
-    // 2. Render Students List
     if (data.students) {
       Object.keys(data.students).forEach((username) => {
         const user = data.students[username];
@@ -171,9 +180,74 @@ function initAdminDashboard() {
             <td class="p-3 text-gray-600">${user.username}</td>
             <td class="p-3 text-gray-600">${user.password}</td>
             <td class="p-3 font-medium text-indigo-600">${user.route || '-'}</td>
+            <td class="p-3"><button onclick="deleteUser('student', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td>
           </tr>
         `;
       });
+    }
+  });
+
+  // 2. Listen to Live Bus Location for Admin Card
+  db.ref('liveBus/location').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      document.getElementById('adminBusRoute').innerText = data.route || "Active Route";
+      document.getElementById('adminBusDriver').innerText = data.driver || "Driver";
+      document.getElementById('adminBusSpeed').innerText = (data.speed ? (data.speed * 3.6).toFixed(1) : "0.0") + " km/h";
+      document.getElementById('adminBusCoords').innerText = `${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`;
+    } else {
+      document.getElementById('adminBusRoute').innerText = "Not Active";
+      document.getElementById('adminBusDriver').innerText = "-";
+      document.getElementById('adminBusSpeed').innerText = "0.0 km/h";
+      document.getElementById('adminBusCoords').innerText = "0.00, 0.00";
+    }
+  });
+}
+
+// ==========================================
+// WARNING / NOTICE BROADCAST SYSTEM
+// ==========================================
+function sendWarning(event) {
+  if (event) event.preventDefault();
+  const msg = document.getElementById('warningMessage').value.trim();
+  if (!msg) return;
+
+  db.ref('liveBus/warning').set(msg).then(() => {
+    alert("Warning successfully broadcasted to all drivers and students!");
+    document.getElementById('warningForm').reset();
+  });
+}
+
+function clearWarning() {
+  db.ref('liveBus/warning').remove().then(() => {
+    alert("Warning cleared successfully!");
+  });
+}
+
+function listenForWarnings() {
+  db.ref('liveBus/warning').on('value', (snapshot) => {
+    const warningMsg = snapshot.val();
+    
+    // Driver banner elements
+    const driverBanner = document.getElementById('driverWarningBanner');
+    const driverText = document.getElementById('driverWarningText');
+    
+    // Student banner elements
+    const studentBanner = document.getElementById('studentWarningBanner');
+    const studentText = document.getElementById('studentWarningText');
+
+    if (warningMsg) {
+      if (driverBanner && driverText) {
+        driverText.innerText = warningMsg;
+        driverBanner.classList.remove('hidden');
+      }
+      if (studentBanner && studentText) {
+        studentText.innerText = warningMsg;
+        studentBanner.classList.remove('hidden');
+      }
+    } else {
+      if (driverBanner) driverBanner.classList.add('hidden');
+      if (studentBanner) studentBanner.classList.add('hidden');
     }
   });
 }
@@ -184,6 +258,10 @@ function initAdminDashboard() {
 let watchId = null;
 
 function initDriverDashboard(userData) {
+  if(document.getElementById('driverRouteDisplay')) {
+    document.getElementById('driverRouteDisplay').innerText = userData.route || "Default Route";
+  }
+
   const startBtn = document.getElementById('startBtn');
   const stopBtn = document.getElementById('stopBtn');
 
@@ -227,6 +305,7 @@ function initDriverDashboard(userData) {
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
+        db.ref('liveBus/location').remove(); // Remove live location when stopped
         alert("Broadcast rok di gayi hai.");
       }
     };
@@ -253,9 +332,10 @@ function initStudentDashboard() {
       const lat = data.lat;
       const lng = data.lng;
       const route = data.route || "Live Bus";
+      const driver = data.driver || "Driver";
 
       if (!busMarker) {
-        busMarker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>${route}</b><br>Bus is moving`).openPopup();
+        busMarker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>${route}</b><br>Driver: ${driver}`).openPopup();
       } else {
         busMarker.setLatLng([lat, lng]);
       }
