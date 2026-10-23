@@ -1,4 +1,3 @@
-/* Import Google Font for a clean look */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 body {
@@ -10,12 +9,10 @@ body {
     color: #1f2937;
 }
 
-/* Smooth transitions for interactive elements */
 button, input, select {
     transition: all 0.25s ease-in-out;
 }
 
-/* Card glassmorphism or soft shadow effect */
 .login-card, .dashboard-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -23,28 +20,23 @@ button, input, select {
     border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* Map container styling */
-#map {
+#adminMap, #studentMap {
     width: 100%;
-    height: calc(100vh - 64px);
     z-index: 1;
 }
 
-/* Leaflet Popup Customization */
 .leaflet-popup-content-wrapper {
     background: #ffffff;
     color: #1f2937;
     border-radius: 12px;
-    padding: 4px;
+    padding: 6px 10px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    font-weight: 600;
 }
 
 .leaflet-popup-tip {
     background: #ffffff;
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
 }
