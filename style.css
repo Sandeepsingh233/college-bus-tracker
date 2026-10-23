@@ -46,31 +46,7 @@ body {
 }
 
 /* ==========================================
-   2. STUDENT THEME (Black, White & Dark Green)
-========================================== */
-.student-theme {
-    background-color: #f8fafc;
-    color: #0f172a;
-}
-
-.student-header {
-    background-color: #08331e;
-    border-bottom: 2px solid #059669;
-}
-
-.student-btn-green {
-    background-color: #059669;
-    color: #ffffff;
-    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
-    transition: all 0.2s ease;
-}
-
-.student-btn-green:hover {
-    background-color: #047857;
-}
-
-/* ==========================================
-   3. DRIVER THEME (Uber Inspired Minimalist)
+   2. DRIVER THEME (Uber Inspired Minimalist)
 ========================================== */
 .uber-theme {
     background-color: #000000;
@@ -95,28 +71,38 @@ body {
 }
 
 /* ==========================================
-   MAP TILE CUSTOMIZATIONS
+   3. STUDENT MAP ADJUSTMENTS
 ========================================== */
 #adminMap {
     filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
 #studentMap {
-    filter: none;
+    filter: invert(92%) hue-rotate(190deg) brightness(90%) contrast(95%);
 }
 
 .leaflet-popup-content-wrapper {
-    border-radius: 10px;
-    font-family: monospace;
+    background: #111827 !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #3b82f6 !important;
+    border-radius: 12px !important;
+    font-family: monospace !important;
+}
+
+.leaflet-popup-tip {
+    background: #111827 !important;
 }
 
 ::-webkit-scrollbar {
     width: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: #0a0f1d;
 }
 ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: #1f2937;
     border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #374151;
 }
