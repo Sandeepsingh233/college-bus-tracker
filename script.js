@@ -114,7 +114,7 @@ function showDashboard(role, userData = null) {
 }
 
 // ==========================================
-// ADMIN SEARCH USER DETAILS (Student ID / Driver ID)
+// ADMIN SEARCH USER DETAILS
 // ==========================================
 async function searchStudentDetails() {
   const searchId = document.getElementById('searchStudentIdInput').value.trim().toLowerCase();
@@ -138,7 +138,7 @@ async function searchStudentDetails() {
   resultBox.classList.remove('hidden');
   if (found) {
     resultBox.innerHTML = `
-      <h3 class="font-bold text-green-700 text-base mb-1">Student Found:</h3>
+      <h3 class="font-extrabold text-emerald-800 text-base mb-1">Student Found:</h3>
       <p><strong>Name:</strong> ${found.name}</p>
       <p><strong>Student ID:</strong> ${found.studentId}</p>
       <p><strong>Username:</strong> ${found.username}</p>
@@ -172,7 +172,7 @@ async function searchDriverDetails() {
   resultBox.classList.remove('hidden');
   if (found) {
     resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-700 text-base mb-1">Driver Found:</h3>
+      <h3 class="font-extrabold text-indigo-900 text-base mb-1">Driver Found:</h3>
       <p><strong>Name:</strong> ${found.name}</p>
       <p><strong>Driver ID:</strong> ${found.driverId || 'N/A'}</p>
       <p><strong>Username:</strong> ${found.username}</p>
@@ -229,7 +229,7 @@ function checkMyAttendanceStatus(role) {
       const btn = document.getElementById('markDriverAttendanceBtn');
       if (data && data.status === "Present") {
         if (statusText) statusText.innerText = "Status: Present Today ✅";
-        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-blue-600', 'bg-gray-400'); }
+        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-indigo-600', 'bg-gray-400'); }
       } else {
         if (statusText) statusText.innerText = "Status: Not Marked Yet ❌";
       }
@@ -238,7 +238,7 @@ function checkMyAttendanceStatus(role) {
       const btn = document.getElementById('markStudentAttendanceBtn');
       if (data && data.status === "Present") {
         if (statusText) statusText.innerText = "Attendance: Present ✅";
-        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-green-600', 'bg-gray-400'); }
+        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-emerald-600', 'bg-gray-400'); }
       } else {
         if (statusText) statusText.innerText = "Attendance: Absent ❌";
       }
@@ -246,7 +246,6 @@ function checkMyAttendanceStatus(role) {
   });
 }
 
-// Load Student Attendance History across all dates
 function loadStudentAttendanceHistory() {
   if (!currentUserData || currentRole !== 'student') return;
   const username = currentUserData.username;
@@ -257,7 +256,7 @@ function loadStudentAttendanceHistory() {
     if (!historyBody) return;
     historyBody.innerHTML = '';
 
-    const dates = Object.keys(allDatesData).sort().reverse(); // Newest first
+    const dates = Object.keys(allDatesData).sort().reverse();
     let hasRecords = false;
 
     dates.forEach(date => {
@@ -265,16 +264,16 @@ function loadStudentAttendanceHistory() {
       if (dayRecords && dayRecords[username]) {
         hasRecords = true;
         historyBody.innerHTML += `
-          <tr class="border-b">
+          <tr class="border-b border-white/40">
             <td class="p-2 font-medium">${date}</td>
-            <td class="p-2 text-green-700 font-bold">Present ✅</td>
+            <td class="p-2 text-emerald-700 font-bold">Present ✅</td>
           </tr>
         `;
       }
     });
 
     if (!hasRecords) {
-      historyBody.innerHTML = `<tr><td colspan="2" class="p-3 text-center text-gray-500">No attendance history found.</td></tr>`;
+      historyBody.innerHTML = `<tr><td colspan="2" class="p-3 text-center text-gray-600">No attendance history found.</td></tr>`;
     }
   });
 }
@@ -404,7 +403,7 @@ function initAdminDashboard() {
 
     if (!buses) {
       if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
-      if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No active buses broadcasting.</td></tr>';
+      if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-600">No active buses broadcasting.</td></tr>';
       Object.keys(adminBusMarkers).forEach(key => adminMap.removeLayer(adminBusMarkers[key]));
       adminBusMarkers = {};
       return;
@@ -419,12 +418,12 @@ function initAdminDashboard() {
         const bus = buses[driverKey];
         const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
         activeBusTableBody.innerHTML += `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-3 font-bold text-indigo-600">${bus.busNumber || 'N/A'}</td>
+          <tr class="border-b border-white/30 hover:bg-white/20">
+            <td class="p-3 font-bold text-indigo-700">${bus.busNumber || 'N/A'}</td>
             <td class="p-3 text-gray-800">${driverKey}</td>
-            <td class="p-3 text-gray-600">${bus.route || 'Route'}</td>
+            <td class="p-3 text-gray-700">${bus.route || 'Route'}</td>
             <td class="p-3 font-mono">${speed} km/h</td>
-            <td class="p-3"><button onclick="forceStopBus('${driverKey}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 font-semibold shadow">Force Stop</button></td>
+            <td class="p-3"><button onclick="forceStopBus('${driverKey}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl text-xs font-bold shadow">Force Stop</button></td>
           </tr>
         `;
       });
@@ -435,7 +434,7 @@ function initAdminDashboard() {
       const bus = buses[driverKey];
       if (bus && bus.lat && bus.lng) {
         bounds.push([bus.lat, bus.lng]);
-        const popupText = `<div class="text-sm"><h3 class="font-bold text-indigo-600">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
+        const popupText = `<div class="text-sm"><h3 class="font-bold text-indigo-700">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
 
         if (!adminBusMarkers[driverKey]) {
           adminBusMarkers[driverKey] = L.marker([bus.lat, bus.lng]).addTo(adminMap).bindPopup(popupText);
@@ -487,15 +486,15 @@ function fetchAndRenderData() {
       if (userTableBody) {
         userTableBody.innerHTML = '';
         if (Object.keys(drivers).length === 0 && Object.keys(students).length === 0) {
-          userTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No users added yet.</td></tr>';
+          userTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-600">No users added yet.</td></tr>';
         } else {
           Object.keys(drivers).forEach((username) => {
             const user = drivers[username];
-            userTableBody.innerHTML += `<tr class="border-b hover:bg-gray-50 text-sm"><td class="p-3"><span class="bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded text-xs">DRIVER</span></td><td class="p-3 font-medium text-gray-800">${user.name}</td><td class="p-3 text-gray-600">ID: <b>${user.driverId || 'N/A'}</b> | Bus: <b>${user.busNumber || 'N/A'}</b></td><td class="p-3 font-medium text-indigo-600">${user.route}</td><td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td></tr>`;
+            userTableBody.innerHTML += `<tr class="border-b border-white/30 hover:bg-white/20 text-sm"><td class="p-3"><span class="bg-indigo-500/20 text-indigo-900 font-bold px-2.5 py-0.5 rounded-lg text-xs">DRIVER</span></td><td class="p-3 font-semibold text-gray-900">${user.name}</td><td class="p-3 text-gray-700">ID: <b>${user.driverId || 'N/A'}</b> | Bus: <b>${user.busNumber || 'N/A'}</b></td><td class="p-3 font-semibold text-indigo-800">${user.route}</td><td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl text-xs font-bold">Delete</button></td></tr>`;
           });
           Object.keys(students).forEach((username) => {
             const user = students[username];
-            userTableBody.innerHTML += `<tr class="border-b hover:bg-gray-50 text-sm"><td class="p-3"><span class="bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded text-xs">STUDENT</span></td><td class="p-3 font-medium text-gray-800">${user.name}</td><td class="p-3 text-gray-600">ID: <b>${user.studentId || 'N/A'}</b> | Course: ${user.course || 'N/A'}</td><td class="p-3 font-medium text-indigo-600">${user.route}</td><td class="p-3"><button onclick="deleteUser('student', '${user.username}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">Delete</button></td></tr>`;
+            userTableBody.innerHTML += `<tr class="border-b border-white/30 hover:bg-white/20 text-sm"><td class="p-3"><span class="bg-emerald-500/20 text-emerald-900 font-bold px-2.5 py-0.5 rounded-lg text-xs">STUDENT</span></td><td class="p-3 font-semibold text-gray-900">${user.name}</td><td class="p-3 text-gray-700">ID: <b>${user.studentId || 'N/A'}</b> | Course: ${user.course || 'N/A'}</td><td class="p-3 font-semibold text-indigo-800">${user.route}</td><td class="p-3"><button onclick="deleteUser('student', '${user.username}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl text-xs font-bold">Delete</button></td></tr>`;
           });
         }
       }
@@ -505,8 +504,8 @@ function fetchAndRenderData() {
         Object.keys(drivers).forEach((username) => {
           const user = drivers[username];
           const isPresent = driverAtt[username] && driverAtt[username].status === "Present";
-          const badge = isPresent ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold">Present ✅</span>' : '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">Absent ❌</span>';
-          driverTableBody.innerHTML += `<tr class="border-b"><td class="p-2.5 font-medium">${user.name}</td><td class="p-2.5 text-indigo-600 font-bold">${user.driverId || username} (Bus: ${user.busNumber || 'N/A'})</td><td class="p-2.5">${badge}</td></tr>`;
+          const badge = isPresent ? '<span class="bg-emerald-500/20 text-emerald-800 px-2 py-0.5 rounded-lg text-xs font-bold">Present ✅</span>' : '<span class="bg-red-500/20 text-red-800 px-2 py-0.5 rounded-lg text-xs font-bold">Absent ❌</span>';
+          driverTableBody.innerHTML += `<tr class="border-b border-white/20"><td class="p-2.5 font-semibold">${user.name}</td><td class="p-2.5 text-indigo-800 font-bold">${user.driverId || username} (Bus: ${user.busNumber || 'N/A'})</td><td class="p-2.5">${badge}</td></tr>`;
         });
       }
 
@@ -515,8 +514,8 @@ function fetchAndRenderData() {
         Object.keys(students).forEach((username) => {
           const user = students[username];
           const isPresent = studentAtt[username] && studentAtt[username].status === "Present";
-          const badge = isPresent ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold">Present ✅</span>' : '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">Absent ❌</span>';
-          studentTableBody.innerHTML += `<tr class="border-b"><td class="p-2.5 font-medium">${user.name}</td><td class="p-2.5 text-gray-600">${user.studentId || 'N/A'}</td><td class="p-2.5 text-gray-600">${user.course || 'N/A'}</td><td class="p-2.5">${badge}</td></tr>`;
+          const badge = isPresent ? '<span class="bg-emerald-500/20 text-emerald-800 px-2 py-0.5 rounded-lg text-xs font-bold">Present ✅</span>' : '<span class="bg-red-500/20 text-red-800 px-2 py-0.5 rounded-lg text-xs font-bold">Absent ❌</span>';
+          studentTableBody.innerHTML += `<tr class="border-b border-white/20"><td class="p-2.5 font-semibold">${user.name}</td><td class="p-2.5 text-gray-700">${user.studentId || 'N/A'}</td><td class="p-2.5 text-gray-700">${user.course || 'N/A'}</td><td class="p-2.5">${badge}</td></tr>`;
         });
       }
     });
@@ -617,7 +616,7 @@ function initDriverDashboard(userData) {
 }
 
 // ==========================================
-// STUDENT DASHBOARD & ATTENDANCE HISTORY
+// STUDENT DASHBOARD
 // ==========================================
 let studentMap = null;
 let studentBusMarker = null;
