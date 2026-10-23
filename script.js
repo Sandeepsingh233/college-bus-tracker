@@ -191,10 +191,25 @@ function addNewUser(event) {
 
 function deleteUser(role, username) {
   if (confirm(`Kya aap waqai ${username} (${role}) ko delete karna chahte hain?`)) {
+    // Also remove their live broadcast if active
+    if (role === 'driver') {
+      db.ref(`liveBus/buses/${username}`).remove();
+    }
     db.ref(`users/${role}s/${username}`).remove().then(() => {
       alert("User successfully delete ho gaya hai!");
     }).catch((error) => {
       alert("Error deleting user: " + error.message);
+    });
+  }
+}
+
+// Force Stop specific bus broadcast from Admin Panel
+function forceStopBus(driverKey) {
+  if (confirm(`Kya aap driver '${driverKey}' ki live bus tracking force-stop karna chahte hain?`)) {
+    db.ref(`liveBus/buses/${driverKey}`).remove().then(() => {
+      alert("Bus broadcasting force-stop kar di gayi hai!");
+    }).catch((error) => {
+      alert("Error: " + error.message);
     });
   }
 }
@@ -220,12 +235,17 @@ function initAdminDashboard() {
 
   setupRealtimeAttendanceListener();
 
+  // Track All Buses Simultaneously on Admin Map & Active Fleet Table
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const activeCountEl = document.getElementById('activeBusesCount');
+    const activeBusTableBody = document.getElementById('adminActiveBusesTableBody');
 
     if (!buses) {
       if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
+      if (activeBusTableBody) {
+        activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No active buses broadcasting right now.</td></tr>';
+      }
       Object.keys(adminBusMarkers).forEach(key => adminMap.removeLayer(adminBusMarkers[key]));
       adminBusMarkers = {};
       return;
@@ -233,6 +253,24 @@ function initAdminDashboard() {
 
     const activeKeys = Object.keys(buses);
     if (activeCountEl) activeCountEl.innerText = `${activeKeys.length} Active Bus${activeKeys.length > 1 ? 'es' : ''}`;
+
+    // Render Active Buses Fleet Table for Admin
+    if (activeBusTableBody) {
+      activeBusTableBody.innerHTML = '';
+      activeKeys.forEach((driverKey) => {
+        const bus = buses[driverKey];
+        const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
+        activeBusTableBody.innerHTML += `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="p-3 font-medium text-gray-800">${driverKey}</td>
+            <td class="p-3 text-gray-600">${bus.driverName || 'Driver'}</td>
+            <td class="p-3 text-indigo-600 font-medium">${bus.route || 'Route'}</td>
+            <td class="p-3 font-mono">${speed} km/h</td>
+            <td class="p-3"><button onclick="forceStopBus('${driverKey}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 font-semibold shadow">Force Stop</button></td>
+          </tr>
+        `;
+      });
+    }
 
     const bounds = [];
     activeKeys.forEach((driverKey) => {
@@ -500,7 +538,6 @@ function initStudentDashboard(userData) {
       if (bus && bus.lat && bus.lng) {
         const busRoute = (bus.route || "").trim().toLowerCase();
 
-        // SIRF TABHI SHOW KAREIN JAB ROUTE MATCH KARE YAA PEHLE SE KOI ROUTE ASSIGN NA HO
         if (!studentAllocatedRoute || busRoute === studentAllocatedRoute || busRoute.includes(studentAllocatedRoute) || studentAllocatedRoute.includes(busRoute)) {
           const lat = bus.lat;
           const lng = bus.lng;
@@ -522,7 +559,6 @@ function initStudentDashboard(userData) {
       }
     });
 
-    // Remove any markers that do not match the student's route
     Object.keys(studentBusMarkers).forEach(key => {
       if (!activeRouteKeys.includes(key)) {
         studentMap.removeLayer(studentBusMarkers[key]);
