@@ -206,7 +206,6 @@ let adminMap = null;
 let adminBusMarkers = {};
 
 function initAdminDashboard() {
-  // Set default date picker value to today
   const dateFilter = document.getElementById('attendanceDateFilter');
   if (dateFilter && !dateFilter.value) {
     dateFilter.value = getTodayDateString();
@@ -220,12 +219,8 @@ function initAdminDashboard() {
     }).addTo(adminMap);
   }
 
-  // Load Users Table & Attendance
-  loadAdminAttendance();
-
-  db.ref('users').on('value', () => {
-    loadAdminAttendance();
-  });
+  // Real-time listeners setup karenge taaki relogin na karna pade
+  setupRealtimeAttendanceListener();
 
   // Track All Buses Simultaneously on Admin Map
   db.ref('liveBus/buses').on('value', (snapshot) => {
@@ -253,7 +248,6 @@ function initAdminDashboard() {
         const driverName = bus.driverName || bus.driver;
 
         bounds.push([lat, lng]);
-
         const popupText = `<div class="text-sm"><h3 class="font-bold text-indigo-600">${route}</h3><p><strong>Driver:</strong> ${driverName}</p><p><strong>Speed:</strong> ${speed} km/h</p></div>`;
 
         if (!adminBusMarkers[driverKey]) {
@@ -278,8 +272,27 @@ function initAdminDashboard() {
   });
 }
 
-// Load Attendance data for Admin Panel
-function loadAdminAttendance() {
+// Real-time Attendance Listener (Bina relogin ke live update ke liye)
+function setupRealtimeAttendanceListener() {
+  const dateFilter = document.getElementById('attendanceDateFilter');
+
+  db.ref('users').on('value', () => {
+    fetchAndRenderAttendanceData();
+  });
+
+  db.ref('attendance').on('value', () => {
+    fetchAndRenderAttendanceData();
+  });
+
+  if (dateFilter) {
+    dateFilter.onchange = () => {
+      fetchAndRenderAttendanceData();
+    };
+  }
+}
+
+// Fetch and Render Attendance Data
+function fetchAndRenderAttendanceData() {
   const dateFilter = document.getElementById('attendanceDateFilter');
   const selectedDate = dateFilter ? dateFilter.value : getTodayDateString();
 
