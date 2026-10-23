@@ -45,7 +45,7 @@
             <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-md">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Admin Control Panel</h1>
-                    <p class="text-sm text-gray-500">Manage users, track live buses, monitor attendance, and broadcast warnings</p>
+                    <p class="text-sm text-gray-500">Manage users, track live buses, force-stop stuck broadcasts, and monitor attendance</p>
                 </div>
                 <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 text-sm">Logout</button>
             </div>
@@ -57,6 +57,28 @@
                     <span id="activeBusesCount" class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full">0 Active Buses</span>
                 </div>
                 <div id="adminMap" class="w-full h-96 rounded-xl border border-gray-200 shadow-inner z-0"></div>
+            </div>
+
+            <!-- Active Fleet Force Stop Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Active Fleet Control (Force Stop Stuck Buses)</h2>
+                <p class="text-xs text-gray-500 mb-4">Yahan aapko woh saari buses dikhengi jinka broadcast active hai. Agar koi driver location off karna bhul jaye, toh aap yahan se Force Stop kar sakte hain.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="p-3 border-b">Driver Username</th>
+                                <th class="p-3 border-b">Driver Name</th>
+                                <th class="p-3 border-b">Route</th>
+                                <th class="p-3 border-b">Speed</th>
+                                <th class="p-3 border-b">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminActiveBusesTableBody">
+                            <tr><td colspan="5" class="p-4 text-center text-gray-500">No active buses broadcasting right now.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Attendance Monitoring Section -->
