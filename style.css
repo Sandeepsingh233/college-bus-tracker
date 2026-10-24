@@ -71,7 +71,7 @@ body {
 }
 
 /* ==========================================
-   3. STUDENT MAP ADJUSTMENTS
+   3. MAP ADJUSTMENTS
 ========================================== */
 #adminMap {
     filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
