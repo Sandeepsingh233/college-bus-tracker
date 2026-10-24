@@ -328,7 +328,7 @@ async function searchDriverDetails() {
 }
 
 // ==========================================
-// USER MANAGEMENT (Added Pickup Stop handling)
+// USER MANAGEMENT & COMPLETE DELETE CLEANUP
 // ==========================================
 function addNewUser(event) {
   if (event) event.preventDefault();
@@ -358,10 +358,38 @@ function addNewUser(event) {
   });
 }
 
-function deleteUser(role, username) {
-  if (confirm(`Kya aap ${username} ko delete karna chahte hain?`)) {
-    if (role === 'driver') db.ref(`liveBus/buses/${username}`).remove();
-    db.ref(`users/${role}s/${username}`).remove().then(() => alert("User deleted!"));
+async function deleteUser(role, username) {
+  if (!confirm(`Kya aap '${username}' aur uske sabhi purane attendance records ko permanently delete karna chahte hain?`)) {
+    return;
+  }
+
+  try {
+    if (role === 'driver') {
+      await db.ref(`liveBus/buses/${username}`).remove();
+    }
+
+    await db.ref(`users/${role}s/${username}`).remove();
+
+    // Clean up all historic attendance for this username across all dates
+    const attendanceRef = db.ref(`attendance/${role === 'driver' ? 'drivers' : 'students'}`);
+    const snapshot = await attendanceRef.once('value');
+    const allDates = snapshot.val() || {};
+
+    const deletePromises = [];
+    Object.keys(allDates).forEach(dateStr => {
+      if (allDates[dateStr] && allDates[dateStr][username]) {
+        deletePromises.push(db.ref(`attendance/${role === 'driver' ? 'drivers' : 'students'}/${dateStr}/${username}`).remove());
+      }
+    });
+
+    await Promise.all(deletePromises);
+
+    alert(`User '${username}' aur uske saare purane attendance records successfully delete kar diye gaye hain!`);
+    fetchAndRenderData();
+
+  } catch (error) {
+    console.error("Delete user error:", error);
+    alert("Delete karne mein error aaya: " + error.message);
   }
 }
 
