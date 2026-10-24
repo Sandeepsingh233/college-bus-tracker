@@ -129,6 +129,62 @@ function showDashboard(role, userData = null) {
 }
 
 // ==========================================
+// DRIVER SELF ATTENDANCE LOGIC
+// ==========================================
+function markDriverSelfAttendance() {
+  if (!currentUserData || currentRole !== 'driver') return;
+  const today = getTodayDateString();
+  const username = currentUserData.username;
+
+  const attendanceObj = {
+    username: username,
+    name: currentUserData.name,
+    driverId: currentUserData.driverId || "N/A",
+    busNumber: currentUserData.busNumber || "N/A",
+    route: currentUserData.route || "N/A",
+    status: "Present",
+    timestamp: Date.now()
+  };
+
+  db.ref(`attendance/drivers/${today}/${username}`).set(attendanceObj).then(() => {
+    alert("Aapki (Driver) attendance successfully mark ho gayi hai!");
+    checkDriverSelfAttendanceStatus();
+  }).catch((error) => {
+    alert("Error: " + error.message);
+  });
+}
+
+function checkDriverSelfAttendanceStatus() {
+  if (!currentUserData || currentRole !== 'driver') return;
+  const today = getTodayDateString();
+  const username = currentUserData.username;
+
+  db.ref(`attendance/drivers/${today}/${username}`).on('value', (snapshot) => {
+    const data = snapshot.val();
+    const statusText = document.getElementById('driverSelfAttendanceStatusText');
+    const btn = document.getElementById('markDriverSelfAttendanceBtn');
+
+    if (data && data.status === "Present") {
+      if (statusText) {
+        statusText.innerText = "Status: Present Today ✅";
+        statusText.className = "text-xs font-bold text-emerald-400 font-mono mt-0.5";
+      }
+      if (btn) { 
+        btn.innerText = "Marked ✅"; 
+        btn.disabled = true; 
+        btn.style.opacity = '0.5'; 
+        btn.style.cursor = 'not-allowed';
+      }
+    } else {
+      if (statusText) {
+        statusText.innerText = "Status: Not Marked Yet ❌";
+        statusText.className = "text-xs text-slate-400 font-mono mt-0.5";
+      }
+    }
+  });
+}
+
+// ==========================================
 // DRIVER MARKS STUDENT ATTENDANCE LOGIC
 // ==========================================
 function driverMarkStudentAttendance(studentUsername, status) {
@@ -683,6 +739,9 @@ function initDriverDashboard(userData) {
     if (document.getElementById('driverIdDisplay')) document.getElementById('driverIdDisplay').innerText = userData.driverId || "N/A";
     if (document.getElementById('driverBusNumberDisplay')) document.getElementById('driverBusNumberDisplay').innerText = userData.busNumber || "N/A";
   }
+
+  // Check Driver Self Attendance Status
+  checkDriverSelfAttendanceStatus();
 
   // Load Students assigned to Driver's Route
   const driverRoute = (userData && userData.route) ? userData.route.trim().toLowerCase() : "";
