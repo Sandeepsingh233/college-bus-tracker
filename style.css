@@ -7,9 +7,6 @@ body {
     box-sizing: border-box;
 }
 
-/* ==========================================
-   1. ADMIN THEME (Black & Neon Blue)
-========================================== */
 .admin-theme {
     background-color: #090d16;
     background-image: radial-gradient(at 0% 0%, rgba(0, 170, 255, 0.08) 0px, transparent 50%);
@@ -45,9 +42,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* ==========================================
-   2. DRIVER THEME (Uber Inspired Minimalist)
-========================================== */
 .uber-theme {
     background-color: #000000;
     color: #ffffff;
@@ -70,9 +64,6 @@ body {
     transform: scale(1.01);
 }
 
-/* ==========================================
-   3. MAP ADJUSTMENTS
-========================================== */
 #adminMap {
     filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
