@@ -166,7 +166,7 @@
                 </div>
             </form>
             
-            <!-- Add User Form (Updated with Pickup Stop) -->
+            <!-- Add User Form -->
             <form id="addUserForm" onsubmit="addNewUser(event)" class="admin-card p-6 rounded-2xl space-y-4">
                 <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider border-b border-blue-500/20 pb-2">Create New Driver / Student Account</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -219,7 +219,7 @@
                         </div>
                     </div>
 
-                    <!-- Student Fields (Updated with Pickup Stop Input) -->
+                    <!-- Student Fields -->
                     <div id="studentFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4" style="display: none;">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Student ID</label>
@@ -328,11 +328,12 @@
             🚨 <span id="studentWarningText"></span>
         </div>
 
-        <div id="proximityAlertBanner" class="hidden bg-blue-600 text-white px-4 py-2 text-center text-xs font-black uppercase tracking-wider shadow-md animate-bounce">
-            🚌 Proximity Alert: Your bus is arriving near your location within ~1.5 km!
+        <!-- Proximity Alert Banner with Dismiss Button -->
+        <div id="proximityAlertBanner" class="hidden bg-blue-600 text-white px-4 py-2 flex justify-between items-center text-xs font-black uppercase tracking-wider shadow-md animate-bounce">
+            <span>🚌 Proximity Alert: Your bus is arriving near your location within ~1.5 km!</span>
+            <button onclick="dismissProximityAlert()" class="bg-blue-900 hover:bg-blue-950 text-white px-3 py-1 rounded-lg text-[10px] font-bold">✕ Dismiss</button>
         </div>
 
-        <!-- Student Info Bar (Added Pickup Stop Box) -->
         <div class="bg-[#111827] border-b border-slate-800 p-3 flex flex-wrap justify-between items-center px-6 gap-2">
             <div class="text-xs space-y-1">
                 <div>
