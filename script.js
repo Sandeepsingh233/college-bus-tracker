@@ -22,6 +22,7 @@ const ADMIN_CREDENTIALS = {
 
 let currentUserData = null;
 let currentRole = null;
+let proximityDismissed = false; // Flag to check if student dismissed the banner
 
 function getTodayDateString() {
   const d = new Date();
@@ -74,6 +75,35 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+// ==========================================
+// AUDIO BEEP SOUND GENERATOR (Web Audio API)
+// ==========================================
+function playBeepSound() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Frequency in Hz
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.4); // Beep duration 0.4s
+  } catch (e) {
+    console.log("Audio Context blocked or not supported", e);
+  }
+}
+
+function dismissProximityAlert() {
+  proximityDismissed = true;
+  const banner = document.getElementById('proximityAlertBanner');
+  if (banner) banner.classList.add('hidden');
 }
 
 // ==========================================
@@ -328,7 +358,7 @@ async function searchDriverDetails() {
 }
 
 // ==========================================
-// USER MANAGEMENT & COMPLETE DELETE CLEANUP
+// USER MANAGEMENT & DELETE CLEANUP
 // ==========================================
 function addNewUser(event) {
   if (event) event.preventDefault();
@@ -370,7 +400,6 @@ async function deleteUser(role, username) {
 
     await db.ref(`users/${role}s/${username}`).remove();
 
-    // Clean up all historic attendance for this username across all dates
     const attendanceRef = db.ref(`attendance/${role === 'driver' ? 'drivers' : 'students'}`);
     const snapshot = await attendanceRef.once('value');
     const allDates = snapshot.val() || {};
@@ -793,6 +822,7 @@ function initStudentDashboard(userData) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(studentMap);
   }
 
+  // Live Tracking & Proximity Alert with Beep Sound & Dismiss
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const etaDisplay = document.getElementById('busArrivalTimeDisplay');
@@ -800,8 +830,9 @@ function initStudentDashboard(userData) {
 
     if (!buses) {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
-      etaDisplay.innerText = "Bus ETA: Not Active";
+      etaDisplay.innerText = "Bus ETA: Offline";
       if (proximityBanner) proximityBanner.classList.add('hidden');
+      proximityDismissed = false; // Reset dismiss flag when bus goes offline
       return;
     }
 
@@ -834,9 +865,13 @@ function initStudentDashboard(userData) {
         navigator.geolocation.getCurrentPosition((pos) => {
           const dist = calculateDistanceKm(pos.coords.latitude, pos.coords.longitude, lat, lng);
           if (dist <= 1.5) {
-            if (proximityBanner) proximityBanner.classList.remove('hidden');
+            if (!proximityDismissed) {
+              if (proximityBanner) proximityBanner.classList.remove('hidden');
+              playBeepSound(); // Play audio beep when within 1.5 km
+            }
           } else {
             if (proximityBanner) proximityBanner.classList.add('hidden');
+            proximityDismissed = false; // Reset if bus goes far and comes back again
           }
         });
       }
@@ -844,6 +879,7 @@ function initStudentDashboard(userData) {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
       etaDisplay.innerText = "Bus ETA: Bus offline";
       if (proximityBanner) proximityBanner.classList.add('hidden');
+      proximityDismissed = false;
     }
   });
 }
