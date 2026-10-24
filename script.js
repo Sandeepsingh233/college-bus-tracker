@@ -114,6 +114,97 @@ function showDashboard(role, userData = null) {
 }
 
 // ==========================================
+// DRIVER MARKS STUDENT ATTENDANCE LOGIC
+// ==========================================
+function driverMarkStudentAttendance(studentUsername, status) {
+  if (!currentUserData || currentRole !== 'driver') return;
+
+  const today = getTodayDateString();
+
+  db.ref(`users/students/${studentUsername}`).once('value', (snapshot) => {
+    const studentData = snapshot.val();
+    if (!studentData) return;
+
+    const attendanceObj = {
+      username: studentUsername,
+      name: studentData.name,
+      studentId: studentData.studentId || "N/A",
+      course: studentData.course || "N/A",
+      route: studentData.route || "N/A",
+      status: status, // "Present" or "Absent"
+      markedByDriver: currentUserData.username,
+      timestamp: Date.now()
+    };
+
+    db.ref(`attendance/students/${today}/${studentUsername}`).set(attendanceObj).then(() => {
+      alert(`${studentData.name} ki attendance '${status}' mark ho gayi hai!`);
+    }).catch((error) => {
+      alert("Error: " + error.message);
+    });
+  });
+}
+
+function checkMyAttendanceStatus() {
+  if (!currentUserData || currentRole !== 'student') return;
+  const today = getTodayDateString();
+  const username = currentUserData.username;
+
+  db.ref(`attendance/students/${today}/${username}`).on('value', (snapshot) => {
+    const data = snapshot.val();
+    const statusText = document.getElementById('studentAttendanceStatusText');
+    if (!statusText) return;
+
+    if (data && data.status === "Present") {
+      statusText.innerText = "Attendance Today: Present ✅";
+      statusText.className = "text-xs font-bold text-emerald-400";
+    } else if (data && data.status === "Absent") {
+      statusText.innerText = "Attendance Today: Absent ❌";
+      statusText.className = "text-xs font-bold text-red-400";
+    } else {
+      statusText.innerText = "Attendance Today: Not Marked Yet ⏳";
+      statusText.className = "text-xs font-bold text-slate-400";
+    }
+  });
+}
+
+function loadStudentAttendanceHistory() {
+  if (!currentUserData || currentRole !== 'student') return;
+  const username = currentUserData.username;
+  const historyBody = document.getElementById('studentAttendanceHistoryBody');
+
+  db.ref('attendance/students').on('value', (snapshot) => {
+    const allDatesData = snapshot.val() || {};
+    if (!historyBody) return;
+    historyBody.innerHTML = '';
+
+    const dates = Object.keys(allDatesData).sort().reverse();
+    let hasRecords = false;
+
+    dates.forEach(date => {
+      const dayRecords = allDatesData[date];
+      if (dayRecords && dayRecords[username]) {
+        hasRecords = true;
+        const record = dayRecords[username];
+        const statusBadge = record.status === "Present" 
+          ? '<span class="text-emerald-400 font-extrabold">Present ✅</span>' 
+          : '<span class="text-red-400 font-extrabold">Absent ❌</span>';
+
+        historyBody.innerHTML += `
+          <tr class="border-b border-slate-800">
+            <td class="p-2.5 font-bold text-slate-300">${date}</td>
+            <td class="p-2.5">${statusBadge}</td>
+          </tr>
+        `;
+      }
+    });
+
+    if (!hasRecords) {
+      historyBody.innerHTML = `<tr><td colspan="2" class="p-3 text-center text-slate-500">No attendance history found.</td></tr>`;
+    }
+  });
+}
+
+// ==========================================
 // ADMIN SEARCH USER DETAILS
 // ==========================================
 async function searchStudentDetails() {
@@ -183,105 +274,6 @@ async function searchDriverDetails() {
   } else {
     resultBox.innerHTML = `<p class="text-red-400 font-semibold">No driver found with ID/Username: ${searchId}</p>`;
   }
-}
-
-// ==========================================
-// ATTENDANCE LOGIC
-// ==========================================
-function markAttendance(role) {
-  if (!currentUserData) return;
-  const today = getTodayDateString();
-  const username = currentUserData.username;
-
-  const attendanceObj = {
-    username: username,
-    name: currentUserData.name,
-    status: "Present",
-    timestamp: Date.now()
-  };
-
-  if (role === 'driver') {
-    attendanceObj.driverId = currentUserData.driverId || "N/A";
-    attendanceObj.busNumber = currentUserData.busNumber || "N/A";
-  } else {
-    attendanceObj.studentId = currentUserData.studentId || "N/A";
-    attendanceObj.course = currentUserData.course || "N/A";
-  }
-
-  db.ref(`attendance/${role}s/${today}/${username}`).set(attendanceObj).then(() => {
-    alert("Aapki attendance successfully mark ho gayi hai!");
-    checkMyAttendanceStatus(role);
-    if (role === 'student') loadStudentAttendanceHistory();
-  }).catch((error) => {
-    alert("Error: " + error.message);
-  });
-}
-
-function checkMyAttendanceStatus(role) {
-  if (!currentUserData) return;
-  const today = getTodayDateString();
-  const username = currentUserData.username;
-
-  db.ref(`attendance/${role}s/${today}/${username}`).on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (role === 'driver') {
-      const statusText = document.getElementById('driverAttendanceStatusText');
-      const btn = document.getElementById('markDriverAttendanceBtn');
-      if (data && data.status === "Present") {
-        if (statusText) statusText.innerText = "Status: Present Today ✅";
-        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.style.opacity = '0.5'; }
-      } else {
-        if (statusText) statusText.innerText = "Status: Not Marked Yet ❌";
-      }
-    } else if (role === 'student') {
-      const statusText = document.getElementById('studentAttendanceStatusText');
-      const btn = document.getElementById('markStudentAttendanceBtn');
-      if (data && data.status === "Present") {
-        if (statusText) {
-          statusText.innerText = "Attendance: Present ✅";
-          statusText.className = "text-xs font-bold text-emerald-400";
-        }
-        if (btn) { btn.innerText = "Marked"; btn.disabled = true; btn.classList.replace('bg-blue-600', 'bg-slate-700'); }
-      } else {
-        if (statusText) {
-          statusText.innerText = "Attendance: Absent ❌";
-          statusText.className = "text-xs font-bold text-red-400";
-        }
-      }
-    }
-  });
-}
-
-function loadStudentAttendanceHistory() {
-  if (!currentUserData || currentRole !== 'student') return;
-  const username = currentUserData.username;
-  const historyBody = document.getElementById('studentAttendanceHistoryBody');
-
-  db.ref('attendance/students').on('value', (snapshot) => {
-    const allDatesData = snapshot.val() || {};
-    if (!historyBody) return;
-    historyBody.innerHTML = '';
-
-    const dates = Object.keys(allDatesData).sort().reverse();
-    let hasRecords = false;
-
-    dates.forEach(date => {
-      const dayRecords = allDatesData[date];
-      if (dayRecords && dayRecords[username]) {
-        hasRecords = true;
-        historyBody.innerHTML += `
-          <tr class="border-b border-slate-800">
-            <td class="p-2.5 font-bold text-slate-300">${date}</td>
-            <td class="p-2.5 text-emerald-400 font-extrabold">Present ✅</td>
-          </tr>
-        `;
-      }
-    });
-
-    if (!hasRecords) {
-      historyBody.innerHTML = `<tr><td colspan="2" class="p-3 text-center text-slate-500">No attendance history found.</td></tr>`;
-    }
-  });
 }
 
 // ==========================================
@@ -570,10 +562,66 @@ function initDriverDashboard(userData) {
     if (document.getElementById('driverNameDisplay')) document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
     if (document.getElementById('driverIdDisplay')) document.getElementById('driverIdDisplay').innerText = userData.driverId || "N/A";
     if (document.getElementById('driverBusNumberDisplay')) document.getElementById('driverBusNumberDisplay').innerText = userData.busNumber || "N/A";
-    if (document.getElementById('driverRouteDisplay')) document.getElementById('driverRouteDisplay').innerText = userData.route || "Default Route";
   }
 
-  checkMyAttendanceStatus('driver');
+  // Load Students assigned to Driver's Route
+  const driverRoute = (userData && userData.route) ? userData.route.trim().toLowerCase() : "";
+  const today = getTodayDateString();
+
+  db.ref('users/students').on('value', (snapshot) => {
+    const students = snapshot.val() || {};
+    const tableBody = document.getElementById('driverStudentAttendanceTableBody');
+    const badge = document.getElementById('routeStudentCountBadge');
+
+    db.ref(`attendance/students/${today}`).on('value', (attSnapshot) => {
+      const todayAttendance = attSnapshot.val() || {};
+
+      if (!tableBody) return;
+      tableBody.innerHTML = '';
+
+      let matchingStudents = [];
+
+      Object.keys(students).forEach((username) => {
+        const student = students[username];
+        const studentRoute = (student.route || "").trim().toLowerCase();
+        
+        if (!driverRoute || studentRoute === driverRoute || studentRoute.includes(driverRoute) || driverRoute.includes(studentRoute)) {
+          matchingStudents.push(student);
+        }
+      });
+
+      if (badge) badge.innerText = `${matchingStudents.length} Students`;
+
+      if (matchingStudents.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-zinc-500">No students registered on your route.</td></tr>';
+        return;
+      }
+
+      matchingStudents.forEach((student) => {
+        const attRecord = todayAttendance[student.username];
+        const currentStatus = attRecord ? attRecord.status : "Not Marked";
+
+        let statusBadge = `<span class="text-zinc-500">Pending</span>`;
+        if (currentStatus === "Present") statusBadge = `<span class="text-emerald-400 font-bold">Present ✅</span>`;
+        if (currentStatus === "Absent") statusBadge = `<span class="text-red-400 font-bold">Absent ❌</span>`;
+
+        tableBody.innerHTML += `
+          <tr class="border-b border-zinc-800 hover:bg-zinc-900/50">
+            <td class="p-3 font-semibold text-white">${student.name}</td>
+            <td class="p-3 text-slate-400">${student.studentId || 'N/A'}</td>
+            <td class="p-3 text-slate-400">${student.course || 'N/A'}</td>
+            <td class="p-3 text-center">
+              <div class="flex justify-center items-center gap-2">
+                <button onclick="driverMarkStudentAttendance('${student.username}', 'Present')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase">Present</button>
+                <button onclick="driverMarkStudentAttendance('${student.username}', 'Absent')" class="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase">Absent</button>
+              </div>
+              <div class="mt-1 text-[11px]">${statusBadge}</div>
+            </td>
+          </tr>
+        `;
+      });
+    });
+  });
 
   const startBtn = document.getElementById('startBtn');
   const stopBtn = document.getElementById('stopBtn');
@@ -634,7 +682,7 @@ function initStudentDashboard(userData) {
     if (document.getElementById('studentCourseDisplay')) document.getElementById('studentCourseDisplay').innerText = userData.course || "N/A";
   }
 
-  checkMyAttendanceStatus('student');
+  checkMyAttendanceStatus();
   loadStudentAttendanceHistory();
 
   if (!studentMap && document.getElementById('studentMap')) {
