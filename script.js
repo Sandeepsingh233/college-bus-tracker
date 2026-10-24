@@ -58,7 +58,6 @@ function toggleRouteBox(boxId) {
   }
 }
 
-// Textarea Multiline Enter Key Fix
 function handleScheduleKeydown(event) {
   if (event.key === 'Enter') {
     event.stopPropagation();
@@ -185,6 +184,7 @@ function driverMarkStudentAttendance(studentUsername, status) {
       studentId: studentData.studentId || "N/A",
       course: studentData.course || "N/A",
       route: studentData.route || "N/A",
+      pickupStop: studentData.pickupStop || "N/A",
       status: status,
       markedByDriver: currentUserData.username,
       timestamp: Date.now()
@@ -285,6 +285,7 @@ async function searchStudentDetails() {
       <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
       <p><strong>Course:</strong> ${found.course || 'N/A'}</p>
       <p><strong>Assigned Route:</strong> ${found.route || 'N/A'}</p>
+      <p><strong>Boarding / Pickup Stop:</strong> <span class="text-blue-400 font-bold">${found.pickupStop || 'Not Set'}</span></p>
     `;
   } else {
     resultBox.innerHTML = `<p class="text-red-400 font-semibold">No student found matching: "${searchId}"</p>`;
@@ -327,7 +328,7 @@ async function searchDriverDetails() {
 }
 
 // ==========================================
-// USER MANAGEMENT
+// USER MANAGEMENT (Added Pickup Stop handling)
 // ==========================================
 function addNewUser(event) {
   if (event) event.preventDefault();
@@ -347,6 +348,7 @@ function addNewUser(event) {
   } else {
     userData.studentId = document.getElementById('newStudentId').value.trim();
     userData.course = document.getElementById('newCourse').value.trim();
+    userData.pickupStop = document.getElementById('newPickupStop').value.trim();
   }
 
   db.ref(`users/${role}s/${username}`).set(userData).then(() => {
@@ -534,8 +536,8 @@ function fetchAndRenderData() {
 
             let studentsHTML = group.students.length > 0 ? `
               <table class="w-full text-left text-xs font-mono mt-2">
-                <thead><tr class="bg-slate-900 text-slate-400"><th class="p-2">Name</th><th class="p-2">ID</th><th class="p-2">Course</th><th class="p-2">Action</th></tr></thead>
-                <tbody>${group.students.map(stu => `<tr class="border-b border-slate-800"><td class="p-2">${stu.name}</td><td class="p-2 text-blue-400">${stu.studentId || 'N/A'}</td><td class="p-2">${stu.course || 'N/A'}</td><td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></td></tr>`).join('')}</tbody>
+                <thead><tr class="bg-slate-900 text-slate-400"><th class="p-2">Name</th><th class="p-2">ID</th><th class="p-2">Pickup Stop 📍</th><th class="p-2">Action</th></tr></thead>
+                <tbody>${group.students.map(stu => `<tr class="border-b border-slate-800"><td class="p-2 font-bold text-slate-200">${stu.name}</td><td class="p-2 text-blue-400">${stu.studentId || 'N/A'}</td><td class="p-2 text-amber-300 font-semibold">${stu.pickupStop || 'Not Set'}</td><td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></td></tr>`).join('')}</tbody>
               </table>
             ` : `<p class="text-slate-500 text-xs italic">No students registered.</p>`;
 
@@ -644,8 +646,8 @@ function initDriverDashboard(userData) {
         tableBody.innerHTML += `
           <tr class="border-b border-zinc-800 hover:bg-zinc-900/50">
             <td class="p-3 font-semibold text-white">${student.name}</td>
-            <td class="p-3 text-slate-400">${student.studentId || 'N/A'}</td>
-            <td class="p-3 text-slate-400">${student.course || 'N/A'}</td>
+            <td class="p-3 text-amber-300 font-semibold">${student.pickupStop || 'Not Set'}</td>
+            <td class="p-3 text-slate-400">${student.studentId || 'N/A'} (${student.course || ''})</td>
             <td class="p-3 text-center">
               <div class="flex justify-center items-center gap-2">
                 <button onclick="driverMarkStudentAttendance('${student.username}', 'Present')" class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Present</button>
@@ -695,12 +697,15 @@ function initStudentDashboard(userData) {
     document.getElementById('studentNameDisplay').innerText = userData.name || userData.username;
     document.getElementById('studentIdDisplay').innerText = userData.studentId || "N/A";
     document.getElementById('studentCourseDisplay').innerText = userData.course || "N/A";
+    document.getElementById('studentRouteDisplay').innerText = userData.route || "N/A";
+    document.getElementById('studentPickupStopDisplay').innerText = userData.pickupStop || "Not Set";
   }
 
   checkMyAttendanceStatus();
   loadStudentAttendanceHistory();
 
   const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
+  const studentPickup = (userData && userData.pickupStop) ? userData.pickupStop.trim().toLowerCase() : "";
 
   db.ref('users/drivers').on('value', (snapshot) => {
     const drivers = snapshot.val() || {};
@@ -734,11 +739,16 @@ function initStudentDashboard(userData) {
       if (timetableBox) {
         if (assignedDriver.schedule) {
           const lines = assignedDriver.schedule.split('\n');
-          timetableBox.innerHTML = lines.map(line => `
-            <div class="flex items-center gap-3 border-l-2 border-blue-500 pl-3 py-1">
-              <div><strong class="text-slate-200">${line.trim()}</strong></div>
-            </div>
-          `).join('');
+          timetableBox.innerHTML = lines.map(line => {
+            const isMyStop = studentPickup && line.toLowerCase().includes(studentPickup);
+            const borderClass = isMyStop ? 'border-amber-400 bg-amber-950/30' : 'border-blue-500';
+            const badge = isMyStop ? '<span class="ml-2 bg-amber-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded">MY STOP📍</span>' : '';
+            return `
+              <div class="flex items-center gap-3 border-l-2 ${borderClass} pl-3 py-1.5 rounded-r-lg">
+                <div><strong class="text-slate-200">${line.trim()}</strong>${badge}</div>
+              </div>
+            `;
+          }).join('');
         } else {
           timetableBox.innerHTML = `<p class="text-slate-500 italic">No specific schedule set by Admin.</p>`;
         }
