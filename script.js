@@ -22,7 +22,8 @@ const ADMIN_CREDENTIALS = {
 
 let currentUserData = null;
 let currentRole = null;
-let proximityDismissed = false; // Flag to check if student dismissed the banner
+let proximityDismissed = false;
+let stopArrivalDismissed = false;
 
 function getTodayDateString() {
   const d = new Date();
@@ -78,7 +79,7 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
 }
 
 // ==========================================
-// AUDIO BEEP SOUND GENERATOR (Web Audio API)
+// AUDIO BEEP SOUND GENERATOR
 // ==========================================
 function playBeepSound() {
   try {
@@ -87,23 +88,30 @@ function playBeepSound() {
     const gainNode = audioCtx.createGain();
 
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Frequency in Hz
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
 
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.4); // Beep duration 0.4s
+    oscillator.stop(audioCtx.currentTime + 0.5);
   } catch (e) {
-    console.log("Audio Context blocked or not supported", e);
+    console.log("Audio Context blocked", e);
   }
 }
 
 function dismissProximityAlert() {
   proximityDismissed = true;
-  const banner = document.getElementById('proximityAlertBanner');
-  if (banner) banner.classList.add('hidden');
+  document.getElementById('proximityAlertBanner').classList.add('hidden');
+}
+
+function dismissStopArrivalAlert() {
+  stopArrivalDismissed = true;
+  document.getElementById('busArrivedStopBanner').classList.add('hidden');
+  if (currentUserData) {
+    db.ref(`liveBus/stopArrivals/${currentUserData.route}`).remove();
+  }
 }
 
 // ==========================================
@@ -442,6 +450,21 @@ function clearEmergencyAlerts() {
   db.ref(`liveBus/emergencies`).remove().then(() => alert("Alerts dismissed."));
 }
 
+// Driver Trigger: Announce Bus Arrived at Stop
+function sendBusArrivedAnnouncement() {
+  if (!currentUserData || currentRole !== 'driver') return;
+  const arrivalObj = {
+    driver: currentUserData.username,
+    driverName: currentUserData.name,
+    busNumber: currentUserData.busNumber || "Bus",
+    route: currentUserData.route,
+    timestamp: Date.now()
+  };
+  db.ref(`liveBus/stopArrivals/${currentUserData.route}`).set(arrivalObj).then(() => {
+    alert("📢 Stop arrival announcement sent to all route students!");
+  });
+}
+
 // ==========================================
 // ADMIN DASHBOARD
 // ==========================================
@@ -626,7 +649,7 @@ function fetchAndRenderData() {
         studentTableBody.innerHTML = Object.keys(students).map(username => {
           const user = students[username];
           const isPresent = studentAtt[username] && studentAtt[username].status === "Present";
-          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5">${user.studentId || 'N/A'}</td><td class="p-2.5">${user.course || 'N/A'}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
+          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5 text-studentId || 'N/A'">${user.studentId || 'N/A'}</td><td class="p-2.5">${user.course || 'N/A'}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
         }).join('') || '<tr><td colspan="4" class="p-3 text-center text-slate-500">No students</td></tr>';
       }
     });
@@ -764,6 +787,27 @@ function initStudentDashboard(userData) {
   const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
   const studentPickup = (userData && userData.pickupStop) ? userData.pickupStop.trim().toLowerCase() : "";
 
+  // Listen for Stop Arrival Announcement from Driver
+  db.ref(`liveBus/stopArrivals`).on('value', (snapshot) => {
+    const arrivals = snapshot.val() || {};
+    const arrivalBanner = document.getElementById('busArrivedStopBanner');
+
+    let matchedArrival = false;
+    Object.keys(arrivals).forEach(routeKey => {
+      const arrival = arrivals[routeKey];
+      if (arrival && arrival.route && arrival.route.trim().toLowerCase() === studentRoute.toLowerCase()) {
+        matchedArrival = true;
+      }
+    });
+
+    if (matchedArrival && !stopArrivalDismissed) {
+      if (arrivalBanner) arrivalBanner.classList.remove('hidden');
+      playBeepSound();
+    } else {
+      if (arrivalBanner) arrivalBanner.classList.add('hidden');
+    }
+  });
+
   db.ref('users/drivers').on('value', (snapshot) => {
     const drivers = snapshot.val() || {};
     let assignedDriver = null;
@@ -822,7 +866,6 @@ function initStudentDashboard(userData) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(studentMap);
   }
 
-  // Live Tracking & Proximity Alert with Beep Sound & Dismiss
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const etaDisplay = document.getElementById('busArrivalTimeDisplay');
@@ -832,7 +875,7 @@ function initStudentDashboard(userData) {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
       etaDisplay.innerText = "Bus ETA: Offline";
       if (proximityBanner) proximityBanner.classList.add('hidden');
-      proximityDismissed = false; // Reset dismiss flag when bus goes offline
+      proximityDismissed = false;
       return;
     }
 
@@ -867,11 +910,11 @@ function initStudentDashboard(userData) {
           if (dist <= 1.5) {
             if (!proximityDismissed) {
               if (proximityBanner) proximityBanner.classList.remove('hidden');
-              playBeepSound(); // Play audio beep when within 1.5 km
+              playBeepSound();
             }
           } else {
             if (proximityBanner) proximityBanner.classList.add('hidden');
-            proximityDismissed = false; // Reset if bus goes far and comes back again
+            proximityDismissed = false;
           }
         });
       }
