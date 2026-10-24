@@ -1,62 +1,149 @@
-# 🚌 Real-Time College Bus Tracking & Fleet Management Portal
+🚌 College Bus Tracking & Attendance System
 
-A full-stack, real-time web application built for educational institutions to streamline college transport logistics, student safety, and daily attendance tracking. 
+A modern, web-based fleet monitoring and attendance management system built for educational institutions. The platform connects Admins, Drivers, and Students through real-time GPS tracking, automated distance proximity alerts, manual route stop arrival triggers, and automated attendance logging using Firebase Realtime Database.
 
-The system features multi-role role-based access control (**Admin**, **Driver**, and **Student**), live geolocation broadcasting, route-based map filtering, emergency alert triggers, and structured UI/UX design themes.
+🌟 Key Features
 
----
+👑 Admin Control Panel
 
-## 🌟 Key Features & Role Specifications
+Live Fleet Overview: Real-time multi-bus live mapping via Leaflet.js and OpenStreetMap.
 
-### 👨‍💼 1. Admin Control Panel *(Theme: High-Contrast Black & Neon Blue)*
-* **Multi-Bus Live Fleet Overview:** Tracks all actively broadcasting college buses on a single interactive Leaflet map using real-time Firebase syncing.
-* **Instant ID Search & Lookup:** Dedicated search module allowing admins to retrieve full profile details (Route, Course, Assigned Bus, Reg. Number, Contact details) for any **Student ID** or **Driver ID**.
-* **Active Fleet Control & Force Stop:** Allows administrators to remotely terminate a driver's live GPS broadcast node if the driver forgets to turn off location sharing upon completing their route.
-* **Daily Attendance Management:** Real-time logging of daily driver and student attendance with date-filtering capabilities.
-* **Emergency Broadcast Monitor:** Receives instantaneous, high-priority emergency alerts triggered by drivers in distress.
-* **Account Onboarding & Route Allocation:** Admin interface to dynamically create and delete driver/student credentials along with custom metadata (Student ID, Course, Driver ID, Bus Number, Vehicle Registration No., and Assigned Route).
+User Management: Dynamic creation, management, and deletion of Driver and Student accounts.
 
-### 🚍 2. Driver Interface *(Theme: Minimalist Uber-Style Minimal Dark)*
-* **One-Touch GPS Broadcast:** Live geolocation tracking that captures real-time latitude, longitude, and movement speed using the HTML5 Geolocation API.
-* **Vehicle Spec Card:** Displays assigned Driver ID, Vehicle Bus Number, and designated route.
-* **Daily Attendance Marker:** Allows drivers to mark today's attendance with real-time database validation.
-* **Panic / Emergency Button:** Instant SOS trigger that broadcasts an urgent notification to the Admin Control Panel during breakdowns or emergencies.
+Data Integrity & Cleanup: Automatic cascading deletion of historical student attendance records upon account termination.
 
-### 🎓 3. Student Interface *(Theme: 70-20-10 Dark Navy & Electric Blue)*
-* **Allocated Route Filtering:** The live tracking map dynamically filters and displays **only** the bus assigned to the student's specific route, keeping the map focused and clean.
-* **Estimated Arrival Time (ETA):** Live arrival estimates based on active bus telemetry and tracking status.
-* **Historical Attendance Tracker:** Displays today's attendance status alongside a complete historical log of past attendance records.
-* **System Warning Banners:** Live noticeboard that displays urgent administrative warnings or delay announcements.
+Force Session Override: Emergency administrative power to terminate active broadcast sessions for any bus.
 
----
+Notice Board & Emergency Monitoring: Send college-wide announcements and view instant emergency panic triggers.
 
-## 🛠️ Tech Stack & Architecture
+🚘 Driver Portal (Uber-Style Interface)
 
-* **Frontend Framework:** HTML5, Tailwind CSS, JavaScript (ES6+ Vanilla)
-* **Interactive Mapping:** [Leaflet.js](https://leafletjs.org/) + OpenStreetMap API
-* **Backend Database:** Firebase Realtime Database (NoSQL WebSocket Sync)
-* **Geolocation Engine:** Browser Geolocation API (`navigator.geolocation.watchPosition`)
-* **Deployment & Hosting:** Vercel / GitHub Pages
+One-Tap GPS Broadcast: Continuous live location broadcasting utilizing browser Geolocation.watchPosition with dynamic speed calculation.
 
----
+Interactive Route Checklist: Clickable schedule list for manual stop updates during transit.
 
-## 🔒 Security & Privacy Notice
+Stop Arrival Announcements: Direct arrival notification triggers sent to students on assigned routes.
 
-To adhere to web security best practices:
-* **Firebase Configuration Secrets:** Production API keys and database references should be secured via environment variables or restricted domain referrers in your Firebase Console.
-* **Admin Credentials:** Hardcoded administrative login credentials have been removed from public display. Please consult your institution's system administrator for root access setup.
+Attendance Logging: Daily driver login tracking along with student attendance management (Present / Absent).
 
----
+Panic / SOS Button: Dedicated emergency alert sender connected directly to the Admin Dashboard.
 
-## 🚀 Installation & Local Development
+🎓 Student Dashboard
 
-### Prerequisites
-* A web browser supporting ES6 JavaScript and HTML5 Geolocation (Chrome, Safari, Firefox, Edge).
-* A Firebase project with a **Realtime Database** instance initialized.
+Real-Time Interactive Map: Live tracking of assigned college buses.
 
-### Setup Instructions
+Automated Audio & Visual Alerts: Native Web Audio API tone generator (800Hz beep sequence) activated upon:
 
-1. **Clone the Repository:**
-   ```bash
-   git clone [https://github.com/YOUR_GITHUB_USERNAME/college-bus-tracker.git](https://github.com/YOUR_GITHUB_USERNAME/college-bus-tracker.git)
-   cd college-bus-tracker
+Entering a 1.5 km proximity radius of the student's live location.
+
+Driver announcing arrival at a designated route stop.
+
+Driver Contact Card: Direct contact information and quick-call action for assigned drivers.
+
+Personal Attendance History: Real-time log of daily transit attendance status.
+
+🛠️ Tech Stack & Dependencies
+
+Frontend: HTML5, Tailwind CSS (CDN), JavaScript (ES6+ Native APIs)
+
+Mapping Framework: Leaflet.js with OpenStreetMap Tiles
+
+Audio Engine: Browser-native AudioContext Web Audio API
+
+Backend & Database: Firebase Realtime Database
+
+Deployment & Hosting: Git, GitHub, hosted on Vercel / Netlify
+
+🗄️ Database Schema (Firebase Realtime Database)
+
+{
+  "users": {
+    "drivers": {
+      "driver_username": {
+        "name": "Driver Name",
+        "driverId": "DRV-101",
+        "busNumber": "BUS-05",
+        "phone": "+91 9876543210",
+        "route": "Route 12",
+        "schedule": "07:30 AM - Main Gate\n07:50 AM - City Center"
+      }
+    },
+    "students": {
+      "student_username": {
+        "name": "Student Name",
+        "studentId": "STU-501",
+        "course": "B.Tech CS",
+        "route": "Route 12",
+        "pickupStop": "City Center"
+      }
+    }
+  },
+  "liveBus": {
+    "buses": {
+      "driver_username": {
+        "lat": 28.6139,
+        "lng": 77.2090,
+        "speed": 12.4,
+        "busNumber": "BUS-05",
+        "route": "Route 12"
+      }
+    },
+    "stopArrivals": {
+      "Route 12": {
+        "stopName": "City Center",
+        "timestamp": 1700000000000
+      }
+    }
+  },
+  "attendance": {
+    "students": {
+      "2026-10-24": {
+        "student_username": {
+          "status": "Present",
+          "markedByDriver": "driver_username"
+        }
+      }
+    }
+  }
+}
+
+
+🚀 Installation & Local Development
+
+Clone the Repository:
+
+git clone https://github.com/your-username/college-bus-tracker.git
+cd college-bus-tracker
+
+
+File Hierarchy Setup:
+Ensure your local project workspace includes the following structure:
+
+├── index.html   # Main single-page application interface
+├── style.css    # Custom glassmorphism, UI styling, and map adjustments
+├── script.js    # Firebase initialization, Geolocation API, and UI logic
+└── README.md    # Documentation file
+
+
+Database Configuration:
+Insert your Firebase Realtime Database credentials into script.js:
+
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+
+Execution:
+Launch index.html directly using Visual Studio Code's Live Server extension or open it in any modern browser.
+
+🔐 Security & Deployment Requirements
+
+HTTPS Enforcement: Modern mobile browsers require a secure HTTPS context to expose navigator.geolocation permissions. Deploying via Vercel, Netlify, or GitHub Pages provides secure HTTPS endpoints out of the box.
+
+Firebase Rules Setup: Implement read/write permissions tailored to authenticated roles for production environments.
