@@ -44,6 +44,21 @@ function toggleUserFields() {
   }
 }
 
+// Helper Function to Toggle Accordion Box Body
+function toggleRouteBox(boxId) {
+  const content = document.getElementById(boxId);
+  const icon = document.getElementById(`icon-${boxId}`);
+  if (content) {
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      if (icon) icon.innerText = '▲';
+    } else {
+      content.classList.add('hidden');
+      if (icon) icon.innerText = '▼';
+    }
+  }
+}
+
 // ==========================================
 // LOGIN HANDLER
 // ==========================================
@@ -469,7 +484,7 @@ function fetchAndRenderData() {
 
   const driverTableBody = document.getElementById('adminDriverAttendanceBody');
   const studentTableBody = document.getElementById('adminStudentAttendanceBody');
-  const userTableBody = document.getElementById('userTableBody');
+  const routeCardsContainer = document.getElementById('routeCardsContainer');
 
   db.ref('users').once('value', (userSnapshot) => {
     const usersData = userSnapshot.val() || {};
@@ -481,22 +496,127 @@ function fetchAndRenderData() {
       const driverAtt = (attData.drivers && attData.drivers[selectedDate]) || {};
       const studentAtt = (attData.students && attData.students[selectedDate]) || {};
 
-      if (userTableBody) {
-        userTableBody.innerHTML = '';
-        if (Object.keys(drivers).length === 0 && Object.keys(students).length === 0) {
-          userTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No users added yet.</td></tr>';
+      // Group Users by Route
+      const routesMap = {};
+
+      // Process Drivers
+      Object.keys(drivers).forEach((username) => {
+        const drv = drivers[username];
+        const routeName = drv.route ? drv.route.trim() : "Unassigned Route";
+        if (!routesMap[routeName]) {
+          routesMap[routeName] = { drivers: [], students: [] };
+        }
+        routesMap[routeName].drivers.push(drv);
+      });
+
+      // Process Students
+      Object.keys(students).forEach((username) => {
+        const stu = students[username];
+        const routeName = stu.route ? stu.route.trim() : "Unassigned Route";
+        if (!routesMap[routeName]) {
+          routesMap[routeName] = { drivers: [], students: [] };
+        }
+        routesMap[routeName].students.push(stu);
+      });
+
+      // Render Route Accordion Cards in Admin Dashboard
+      if (routeCardsContainer) {
+        routeCardsContainer.innerHTML = '';
+        const routeNames = Object.keys(routesMap);
+
+        if (routeNames.length === 0) {
+          routeCardsContainer.innerHTML = `<p class="text-slate-500 text-sm">No registered routes or users found.</p>`;
         } else {
-          Object.keys(drivers).forEach((username) => {
-            const user = drivers[username];
-            userTableBody.innerHTML += `<tr class="border-b border-blue-500/10 hover:bg-slate-800/50 text-sm"><td class="p-3"><span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 font-bold px-2.5 py-0.5 rounded-lg text-xs">DRIVER</span></td><td class="p-3 font-semibold text-slate-200">${user.name}</td><td class="p-3 text-slate-400">ID: <b>${user.driverId || 'N/A'}</b> | Bus: <b>${user.busNumber || 'N/A'}</b></td><td class="p-3 font-semibold text-blue-400">${user.route}</td><td class="p-3"><button onclick="deleteUser('driver', '${user.username}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-xl text-xs font-bold uppercase">Delete</button></td></tr>`;
-          });
-          Object.keys(students).forEach((username) => {
-            const user = students[username];
-            userTableBody.innerHTML += `<tr class="border-b border-blue-500/10 hover:bg-slate-800/50 text-sm"><td class="p-3"><span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 font-bold px-2.5 py-0.5 rounded-lg text-xs">STUDENT</span></td><td class="p-3 font-semibold text-slate-200">${user.name}</td><td class="p-3 text-slate-400">ID: <b>${user.studentId || 'N/A'}</b> | Course: ${user.course || 'N/A'}</td><td class="p-3 font-semibold text-blue-400">${user.route}</td><td class="p-3"><button onclick="deleteUser('student', '${user.username}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-xl text-xs font-bold uppercase">Delete</button></td></tr>`;
+          routeNames.forEach((routeName, index) => {
+            const group = routesMap[routeName];
+            const boxId = `route-box-${index}`;
+            const totalCount = group.drivers.length + group.students.length;
+
+            let driversHTML = '';
+            if (group.drivers.length > 0) {
+              group.drivers.forEach((drv) => {
+                driversHTML += `
+                  <div class="bg-blue-950/40 border border-blue-500/30 p-3 rounded-xl mb-2 flex flex-wrap justify-between items-center text-xs">
+                    <div>
+                      <span class="bg-blue-500 text-black font-extrabold px-2 py-0.5 rounded text-[10px] mr-2">DRIVER</span>
+                      <strong class="text-white text-sm">${drv.name}</strong>
+                      <span class="text-slate-400 ml-2">(User: ${drv.username})</span>
+                    </div>
+                    <div class="text-slate-300 space-x-3">
+                      <span>ID: <b class="text-blue-400">${drv.driverId || 'N/A'}</b></span>
+                      <span>Bus No: <b class="text-blue-400">${drv.busNumber || 'N/A'}</b></span>
+                      <span>Reg: <b class="text-blue-400">${drv.regNumber || 'N/A'}</b></span>
+                      <button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[10px] font-bold uppercase ml-2">Delete</button>
+                    </div>
+                  </div>
+                `;
+              });
+            } else {
+              driversHTML = `<p class="text-amber-400/80 text-xs italic mb-2">⚠️ No Driver assigned to this route yet.</p>`;
+            }
+
+            let studentsHTML = '';
+            if (group.students.length > 0) {
+              studentsHTML += `
+                <div class="overflow-x-auto mt-2">
+                  <table class="w-full text-left text-xs font-mono">
+                    <thead>
+                      <tr class="bg-slate-900 text-slate-400 border-b border-slate-800">
+                        <th class="p-2">Student Name</th>
+                        <th class="p-2">Student ID</th>
+                        <th class="p-2">Username</th>
+                        <th class="p-2">Course</th>
+                        <th class="p-2">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              `;
+              group.students.forEach((stu) => {
+                studentsHTML += `
+                  <tr class="border-b border-slate-800/60 hover:bg-slate-800/40">
+                    <td class="p-2 font-bold text-slate-200">${stu.name}</td>
+                    <td class="p-2 text-blue-400">${stu.studentId || 'N/A'}</td>
+                    <td class="p-2 text-slate-400">${stu.username}</td>
+                    <td class="p-2 text-slate-400">${stu.course || 'N/A'}</td>
+                    <td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Delete</button></td>
+                  </tr>
+                `;
+              });
+              studentsHTML += `</tbody></table></div>`;
+            } else {
+              studentsHTML = `<p class="text-slate-500 text-xs italic">No Students registered on this route yet.</p>`;
+            }
+
+            routeCardsContainer.innerHTML += `
+              <div class="bg-[#111827] border border-blue-500/30 rounded-2xl overflow-hidden shadow-lg">
+                <!-- Route Box Header (Clickable) -->
+                <div onclick="toggleRouteBox('${boxId}')" class="p-4 bg-slate-900/80 hover:bg-slate-800/80 cursor-pointer flex justify-between items-center border-b border-slate-800 transition">
+                  <div class="flex items-center gap-3">
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                    <h3 class="font-extrabold text-blue-400 text-sm uppercase tracking-wider">${routeName}</h3>
+                    <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">${totalCount} Members</span>
+                  </div>
+                  <span id="icon-${boxId}" class="text-blue-400 font-bold text-xs">▼</span>
+                </div>
+
+                <!-- Route Details (Driver on Top, Students Below) -->
+                <div id="${boxId}" class="p-4 hidden space-y-4 bg-[#0a0f1d]">
+                  <div>
+                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Assigned Driver Info</h4>
+                    ${driversHTML}
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Assigned Students List (${group.students.length})</h4>
+                    ${studentsHTML}
+                  </div>
+                </div>
+              </div>
+            `;
           });
         }
       }
 
+      // Render Admin Attendance Tables
       if (driverTableBody) {
         driverTableBody.innerHTML = '';
         Object.keys(drivers).forEach((username) => {
