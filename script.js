@@ -44,7 +44,6 @@ function toggleUserFields() {
   }
 }
 
-// Helper Function to Toggle Accordion Box Body
 function toggleRouteBox(boxId) {
   const content = document.getElementById(boxId);
   const icon = document.getElementById(`icon-${boxId}`);
@@ -59,6 +58,18 @@ function toggleRouteBox(boxId) {
   }
 }
 
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // ==========================================
 // LOGIN HANDLER
 // ==========================================
@@ -69,67 +80,51 @@ async function handleLogin(event) {
   const username = document.getElementById('usernameInput').value.trim();
   const password = document.getElementById('passwordInput').value.trim();
 
-  if (!username || !password) {
-    alert("Kripya username aur password dono bharein!");
-    return;
-  }
+  if (!username || !password) return alert("Kripya username aur password dono bharein!");
 
   if (role === "admin") {
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       showDashboard("admin");
-    } else {
-      alert("Galat Admin credentials hain!");
-    }
+    } else alert("Galat Admin credentials hain!");
   } 
   else if (role === "driver") {
     const snapshot = await db.ref(`users/drivers/${username}`).once('value');
     const userData = snapshot.val();
-    
     if (userData && userData.password === password) {
       currentUserData = userData;
       currentRole = "driver";
       showDashboard("driver", userData);
-    } else {
-      alert("Driver username ya password galat hai!");
-    }
+    } else alert("Driver username ya password galat hai!");
   } 
   else if (role === "student") {
     const snapshot = await db.ref(`users/students/${username}`).once('value');
     const userData = snapshot.val();
-    
     if (userData && userData.password === password) {
       currentUserData = userData;
       currentRole = "student";
       showDashboard("student", userData);
-    } else {
-      alert("Student username ya password galat hai!");
-    }
+    } else alert("Student username ya password galat hai!");
   }
 }
 
 function showDashboard(role, userData = null) {
-  const loginSection = document.getElementById('loginSection');
-  if (loginSection) loginSection.style.display = 'none';
+  document.getElementById('loginSection').style.display = 'none';
 
   if (role === 'admin') {
-    const adminDash = document.getElementById('adminDashboard');
-    if (adminDash) adminDash.style.display = 'block';
+    document.getElementById('adminDashboard').style.display = 'block';
     initAdminDashboard();
   } else if (role === 'driver') {
-    const driverDash = document.getElementById('driverDashboard');
-    if (driverDash) driverDash.style.display = 'block';
+    document.getElementById('driverDashboard').style.display = 'block';
     initDriverDashboard(userData);
   } else if (role === 'student') {
-    const studentDash = document.getElementById('studentDashboard');
-    if (studentDash) studentDash.style.display = 'block';
+    document.getElementById('studentDashboard').style.display = 'block';
     initStudentDashboard(userData);
   }
-  
   listenForWarnings();
 }
 
 // ==========================================
-// DRIVER SELF ATTENDANCE LOGIC
+// ATTENDANCE LOGIC
 // ==========================================
 function markDriverSelfAttendance() {
   if (!currentUserData || currentRole !== 'driver') return;
@@ -137,20 +132,16 @@ function markDriverSelfAttendance() {
   const username = currentUserData.username;
 
   const attendanceObj = {
-    username: username,
-    name: currentUserData.name,
+    username, name: currentUserData.name,
     driverId: currentUserData.driverId || "N/A",
     busNumber: currentUserData.busNumber || "N/A",
     route: currentUserData.route || "N/A",
-    status: "Present",
-    timestamp: Date.now()
+    status: "Present", timestamp: Date.now()
   };
 
   db.ref(`attendance/drivers/${today}/${username}`).set(attendanceObj).then(() => {
     alert("Aapki (Driver) attendance successfully mark ho gayi hai!");
     checkDriverSelfAttendanceStatus();
-  }).catch((error) => {
-    alert("Error: " + error.message);
   });
 }
 
@@ -165,31 +156,16 @@ function checkDriverSelfAttendanceStatus() {
     const btn = document.getElementById('markDriverSelfAttendanceBtn');
 
     if (data && data.status === "Present") {
-      if (statusText) {
-        statusText.innerText = "Status: Present Today ✅";
-        statusText.className = "text-xs font-bold text-emerald-400 font-mono mt-0.5";
-      }
-      if (btn) { 
-        btn.innerText = "Marked ✅"; 
-        btn.disabled = true; 
-        btn.style.opacity = '0.5'; 
-        btn.style.cursor = 'not-allowed';
-      }
+      if (statusText) statusText.innerText = "Status: Present Today ✅";
+      if (btn) { btn.innerText = "Marked ✅"; btn.disabled = true; btn.style.opacity = '0.5'; }
     } else {
-      if (statusText) {
-        statusText.innerText = "Status: Not Marked Yet ❌";
-        statusText.className = "text-xs text-slate-400 font-mono mt-0.5";
-      }
+      if (statusText) statusText.innerText = "Status: Not Marked Yet ❌";
     }
   });
 }
 
-// ==========================================
-// DRIVER MARKS STUDENT ATTENDANCE LOGIC
-// ==========================================
 function driverMarkStudentAttendance(studentUsername, status) {
   if (!currentUserData || currentRole !== 'driver') return;
-
   const today = getTodayDateString();
 
   db.ref(`users/students/${studentUsername}`).once('value', (snapshot) => {
@@ -202,15 +178,13 @@ function driverMarkStudentAttendance(studentUsername, status) {
       studentId: studentData.studentId || "N/A",
       course: studentData.course || "N/A",
       route: studentData.route || "N/A",
-      status: status, // "Present" or "Absent"
+      status: status,
       markedByDriver: currentUserData.username,
       timestamp: Date.now()
     };
 
     db.ref(`attendance/students/${today}/${studentUsername}`).set(attendanceObj).then(() => {
       alert(`${studentData.name} ki attendance '${status}' mark ho gayi hai!`);
-    }).catch((error) => {
-      alert("Error: " + error.message);
     });
   });
 }
@@ -262,8 +236,8 @@ function loadStudentAttendanceHistory() {
 
         historyBody.innerHTML += `
           <tr class="border-b border-slate-800">
-            <td class="p-2.5 font-bold text-slate-300">${date}</td>
-            <td class="p-2.5">${statusBadge}</td>
+            <td class="p-2 font-bold text-slate-300">${date}</td>
+            <td class="p-2">${statusBadge}</td>
           </tr>
         `;
       }
@@ -276,101 +250,23 @@ function loadStudentAttendanceHistory() {
 }
 
 // ==========================================
-// ADMIN SEARCH USER DETAILS
-// ==========================================
-async function searchStudentDetails() {
-  const searchId = document.getElementById('searchStudentIdInput').value.trim().toLowerCase();
-  const resultBox = document.getElementById('searchResultBox');
-  if (!searchId) {
-    alert("Kripya Student ID enter karein!");
-    return;
-  }
-
-  const snapshot = await db.ref('users/students').once('value');
-  const students = snapshot.val() || {};
-  let found = null;
-
-  Object.keys(students).forEach(username => {
-    const stu = students[username];
-    if (stu.studentId && stu.studentId.toLowerCase() === searchId) {
-      found = stu;
-    }
-  });
-
-  resultBox.classList.remove('hidden');
-  if (found) {
-    resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-400 text-base mb-1">Student Found:</h3>
-      <p><strong>Name:</strong> ${found.name}</p>
-      <p><strong>Student ID:</strong> ${found.studentId}</p>
-      <p><strong>Username:</strong> ${found.username}</p>
-      <p><strong>Course:</strong> ${found.course}</p>
-      <p><strong>Assigned Route:</strong> ${found.route}</p>
-    `;
-  } else {
-    resultBox.innerHTML = `<p class="text-red-400 font-semibold">No student found with ID: ${searchId}</p>`;
-  }
-}
-
-async function searchDriverDetails() {
-  const searchId = document.getElementById('searchDriverIdInput').value.trim().toLowerCase();
-  const resultBox = document.getElementById('searchResultBox');
-  if (!searchId) {
-    alert("Kripya Driver ID enter karein!");
-    return;
-  }
-
-  const snapshot = await db.ref('users/drivers').once('value');
-  const drivers = snapshot.val() || {};
-  let found = null;
-
-  Object.keys(drivers).forEach(username => {
-    const drv = drivers[username];
-    if ((drv.driverId && drv.driverId.toLowerCase() === searchId) || drv.username.toLowerCase() === searchId) {
-      found = drv;
-    }
-  });
-
-  resultBox.classList.remove('hidden');
-  if (found) {
-    resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-400 text-base mb-1">Driver Found:</h3>
-      <p><strong>Name:</strong> ${found.name}</p>
-      <p><strong>Driver ID:</strong> ${found.driverId || 'N/A'}</p>
-      <p><strong>Username:</strong> ${found.username}</p>
-      <p><strong>Bus Number:</strong> ${found.busNumber}</p>
-      <p><strong>Reg. Number:</strong> ${found.regNumber || 'N/A'}</p>
-      <p><strong>Assigned Route:</strong> ${found.route}</p>
-    `;
-  } else {
-    resultBox.innerHTML = `<p class="text-red-400 font-semibold">No driver found with ID/Username: ${searchId}</p>`;
-  }
-}
-
-// ==========================================
-// USER MANAGEMENT & EMERGENCY
+// USER MANAGEMENT & DYNAMIC FIELDS
 // ==========================================
 function addNewUser(event) {
   if (event) event.preventDefault();
-
   const role = document.getElementById('newRole').value;
   const name = document.getElementById('newName').value.trim();
   const username = document.getElementById('newUsername').value.trim();
   const password = document.getElementById('newPassword').value.trim();
   const route = document.getElementById('newRoute').value.trim();
 
-  let userData = {
-    username: username,
-    password: password,
-    name: name,
-    route: route,
-    createdAt: new Date().toISOString()
-  };
-
+  let userData = { username, password, name, route, createdAt: new Date().toISOString() };
   if (role === 'driver') {
     userData.driverId = document.getElementById('newDriverId').value.trim();
+    userData.phone = document.getElementById('newPhone').value.trim();
     userData.busNumber = document.getElementById('newBusNumber').value.trim();
     userData.regNumber = document.getElementById('newRegNumber').value.trim();
+    userData.schedule = document.getElementById('newSchedule').value.trim();
   } else {
     userData.studentId = document.getElementById('newStudentId').value.trim();
     userData.course = document.getElementById('newCourse').value.trim();
@@ -380,26 +276,18 @@ function addNewUser(event) {
     alert(`${role.toUpperCase()} account successfully ban gaya hai!`);
     document.getElementById('addUserForm').reset();
     toggleUserFields();
-  }).catch((error) => {
-    alert("Error: " + error.message);
   });
 }
 
 function deleteUser(role, username) {
-  if (confirm(`Kya aap waqai ${username} (${role}) ko delete karna chahte hain?`)) {
-    if (role === 'driver') {
-      db.ref(`liveBus/buses/${username}`).remove();
-    }
-    db.ref(`users/${role}s/${username}`).remove().then(() => {
-      alert("User successfully delete ho gaya hai!");
-    });
+  if (confirm(`Kya aap ${username} ko delete karna chahte hain?`)) {
+    if (role === 'driver') db.ref(`liveBus/buses/${username}`).remove();
+    db.ref(`users/${role}s/${username}`).remove().then(() => alert("User deleted!"));
   }
 }
 
 function forceStopBus(driverKey) {
-  if (confirm(`Kya aap driver '${driverKey}' ki live bus tracking force-stop karna chahte hain?`)) {
-    db.ref(`liveBus/buses/${driverKey}`).remove();
-  }
+  if (confirm(`Force stop tracking for '${driverKey}'?`)) db.ref(`liveBus/buses/${driverKey}`).remove();
 }
 
 function sendEmergencyAlert() {
@@ -411,35 +299,26 @@ function sendEmergencyAlert() {
     route: currentUserData.route || "Unknown Route",
     timestamp: Date.now()
   };
-
-  db.ref(`liveBus/emergencies/${currentUserData.username}`).set(emergencyData).then(() => {
-    alert("🚨 Emergency alert Admin ko bhej diya gaya hai!");
-  });
+  db.ref(`liveBus/emergencies/${currentUserData.username}`).set(emergencyData).then(() => alert("🚨 Emergency alert sent!"));
 }
 
 function clearEmergencyAlerts() {
-  db.ref(`liveBus/emergencies`).remove().then(() => {
-    alert("Emergency alerts dismiss kar diye gaye hain.");
-  });
+  db.ref(`liveBus/emergencies`).remove().then(() => alert("Alerts dismissed."));
 }
 
 // ==========================================
-// ADMIN DASHBOARD INITIALIZATION
+// ADMIN DASHBOARD
 // ==========================================
 let adminMap = null;
 let adminBusMarkers = {};
 
 function initAdminDashboard() {
   const dateFilter = document.getElementById('attendanceDateFilter');
-  if (dateFilter && !dateFilter.value) {
-    dateFilter.value = getTodayDateString();
-  }
+  if (dateFilter && !dateFilter.value) dateFilter.value = getTodayDateString();
 
   if (!adminMap && document.getElementById('adminMap')) {
     adminMap = L.map('adminMap').setView([28.6139, 77.2090], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(adminMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(adminMap);
   }
 
   setupRealtimeListeners();
@@ -448,17 +327,15 @@ function initAdminDashboard() {
     const emergencies = snapshot.val();
     const container = document.getElementById('adminEmergencyContainer');
     const list = document.getElementById('adminEmergencyList');
-
     if (!emergencies) {
       if (container) container.classList.add('hidden');
       if (list) list.innerHTML = '';
       return;
     }
-
     if (container) container.classList.remove('hidden');
     if (list) {
       list.innerHTML = '';
-      Object.keys(emergencies).forEach((key) => {
+      Object.keys(emergencies).forEach(key => {
         const em = emergencies[key];
         list.innerHTML += `<p>• Driver: <strong>${em.driverName}</strong> | Bus No: <strong>${em.busNumber}</strong> | Route: ${em.route}</p>`;
       });
@@ -483,7 +360,7 @@ function initAdminDashboard() {
 
     if (activeBusTableBody) {
       activeBusTableBody.innerHTML = '';
-      activeKeys.forEach((driverKey) => {
+      activeKeys.forEach(driverKey => {
         const bus = buses[driverKey];
         const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
         activeBusTableBody.innerHTML += `
@@ -499,12 +376,11 @@ function initAdminDashboard() {
     }
 
     const bounds = [];
-    activeKeys.forEach((driverKey) => {
+    activeKeys.forEach(driverKey => {
       const bus = buses[driverKey];
       if (bus && bus.lat && bus.lng) {
         bounds.push([bus.lat, bus.lng]);
         const popupText = `<div class="text-sm"><h3 class="font-bold text-blue-400">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
-
         if (!adminBusMarkers[driverKey]) {
           adminBusMarkers[driverKey] = L.marker([bus.lat, bus.lng]).addTo(adminMap).bindPopup(popupText);
         } else {
@@ -515,15 +391,10 @@ function initAdminDashboard() {
     });
 
     Object.keys(adminBusMarkers).forEach(key => {
-      if (!buses[key]) {
-        adminMap.removeLayer(adminBusMarkers[key]);
-        delete adminBusMarkers[key];
-      }
+      if (!buses[key]) { adminMap.removeLayer(adminBusMarkers[key]); delete adminBusMarkers[key]; }
     });
 
-    if (bounds.length > 0 && adminMap) {
-      adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-    }
+    if (bounds.length > 0 && adminMap) adminMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
   });
 }
 
@@ -552,119 +423,54 @@ function fetchAndRenderData() {
       const driverAtt = (attData.drivers && attData.drivers[selectedDate]) || {};
       const studentAtt = (attData.students && attData.students[selectedDate]) || {};
 
-      // Group Users by Route
       const routesMap = {};
-
-      // Process Drivers
-      Object.keys(drivers).forEach((username) => {
+      Object.keys(drivers).forEach(username => {
         const drv = drivers[username];
         const routeName = drv.route ? drv.route.trim() : "Unassigned Route";
-        if (!routesMap[routeName]) {
-          routesMap[routeName] = { drivers: [], students: [] };
-        }
+        if (!routesMap[routeName]) routesMap[routeName] = { drivers: [], students: [] };
         routesMap[routeName].drivers.push(drv);
       });
-
-      // Process Students
-      Object.keys(students).forEach((username) => {
+      Object.keys(students).forEach(username => {
         const stu = students[username];
         const routeName = stu.route ? stu.route.trim() : "Unassigned Route";
-        if (!routesMap[routeName]) {
-          routesMap[routeName] = { drivers: [], students: [] };
-        }
+        if (!routesMap[routeName]) routesMap[routeName] = { drivers: [], students: [] };
         routesMap[routeName].students.push(stu);
       });
 
-      // Render Route Accordion Cards in Admin Dashboard
       if (routeCardsContainer) {
         routeCardsContainer.innerHTML = '';
         const routeNames = Object.keys(routesMap);
-
         if (routeNames.length === 0) {
-          routeCardsContainer.innerHTML = `<p class="text-slate-500 text-sm">No registered routes or users found.</p>`;
+          routeCardsContainer.innerHTML = `<p class="text-slate-500 text-sm">No routes found.</p>`;
         } else {
           routeNames.forEach((routeName, index) => {
             const group = routesMap[routeName];
             const boxId = `route-box-${index}`;
             const totalCount = group.drivers.length + group.students.length;
 
-            let driversHTML = '';
-            if (group.drivers.length > 0) {
-              group.drivers.forEach((drv) => {
-                driversHTML += `
-                  <div class="bg-blue-950/40 border border-blue-500/30 p-3 rounded-xl mb-2 flex flex-wrap justify-between items-center text-xs">
-                    <div>
-                      <span class="bg-blue-500 text-black font-extrabold px-2 py-0.5 rounded text-[10px] mr-2">DRIVER</span>
-                      <strong class="text-white text-sm">${drv.name}</strong>
-                      <span class="text-slate-400 ml-2">(User: ${drv.username})</span>
-                    </div>
-                    <div class="text-slate-300 space-x-3">
-                      <span>ID: <b class="text-blue-400">${drv.driverId || 'N/A'}</b></span>
-                      <span>Bus No: <b class="text-blue-400">${drv.busNumber || 'N/A'}</b></span>
-                      <span>Reg: <b class="text-blue-400">${drv.regNumber || 'N/A'}</b></span>
-                      <button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[10px] font-bold uppercase ml-2">Delete</button>
-                    </div>
-                  </div>
-                `;
-              });
-            } else {
-              driversHTML = `<p class="text-amber-400/80 text-xs italic mb-2">⚠️ No Driver assigned to this route yet.</p>`;
-            }
+            let driversHTML = group.drivers.length > 0 ? group.drivers.map(drv => `
+              <div class="bg-blue-950/40 border border-blue-500/30 p-3 rounded-xl mb-2 flex justify-between items-center text-xs">
+                <div><span class="bg-blue-500 text-black font-extrabold px-2 py-0.5 rounded text-[10px] mr-2">DRIVER</span><strong>${drv.name}</strong></div>
+                <div class="space-x-3"><span>Phone: <b class="text-blue-400">${drv.phone || 'N/A'}</b></span><span>Bus: <b class="text-blue-400">${drv.busNumber || 'N/A'}</b></span><button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">Delete</button></div>
+              </div>
+            `).join('') : `<p class="text-amber-400 text-xs italic mb-2">⚠️ No Driver assigned.</p>`;
 
-            let studentsHTML = '';
-            if (group.students.length > 0) {
-              studentsHTML += `
-                <div class="overflow-x-auto mt-2">
-                  <table class="w-full text-left text-xs font-mono">
-                    <thead>
-                      <tr class="bg-slate-900 text-slate-400 border-b border-slate-800">
-                        <th class="p-2">Student Name</th>
-                        <th class="p-2">Student ID</th>
-                        <th class="p-2">Username</th>
-                        <th class="p-2">Course</th>
-                        <th class="p-2">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-              `;
-              group.students.forEach((stu) => {
-                studentsHTML += `
-                  <tr class="border-b border-slate-800/60 hover:bg-slate-800/40">
-                    <td class="p-2 font-bold text-slate-200">${stu.name}</td>
-                    <td class="p-2 text-blue-400">${stu.studentId || 'N/A'}</td>
-                    <td class="p-2 text-slate-400">${stu.username}</td>
-                    <td class="p-2 text-slate-400">${stu.course || 'N/A'}</td>
-                    <td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Delete</button></td>
-                  </tr>
-                `;
-              });
-              studentsHTML += `</tbody></table></div>`;
-            } else {
-              studentsHTML = `<p class="text-slate-500 text-xs italic">No Students registered on this route yet.</p>`;
-            }
+            let studentsHTML = group.students.length > 0 ? `
+              <table class="w-full text-left text-xs font-mono mt-2">
+                <thead><tr class="bg-slate-900 text-slate-400"><th class="p-2">Name</th><th class="p-2">ID</th><th class="p-2">Course</th><th class="p-2">Action</th></tr></thead>
+                <tbody>${group.students.map(stu => `<tr class="border-b border-slate-800"><td class="p-2">${stu.name}</td><td class="p-2 text-blue-400">${stu.studentId || 'N/A'}</td><td class="p-2">${stu.course || 'N/A'}</td><td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></td></tr>`).join('')}</tbody>
+              </table>
+            ` : `<p class="text-slate-500 text-xs italic">No students registered.</p>`;
 
             routeCardsContainer.innerHTML += `
               <div class="bg-[#111827] border border-blue-500/30 rounded-2xl overflow-hidden shadow-lg">
-                <!-- Route Box Header (Clickable) -->
-                <div onclick="toggleRouteBox('${boxId}')" class="p-4 bg-slate-900/80 hover:bg-slate-800/80 cursor-pointer flex justify-between items-center border-b border-slate-800 transition">
-                  <div class="flex items-center gap-3">
-                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                    <h3 class="font-extrabold text-blue-400 text-sm uppercase tracking-wider">${routeName}</h3>
-                    <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">${totalCount} Members</span>
-                  </div>
+                <div onclick="toggleRouteBox('${boxId}')" class="p-4 bg-slate-900/80 hover:bg-slate-800 cursor-pointer flex justify-between items-center border-b border-slate-800">
+                  <div class="flex items-center gap-3"><span class="w-3 h-3 rounded-full bg-blue-500"></span><h3 class="font-extrabold text-blue-400 text-sm uppercase">${routeName}</h3><span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">${totalCount} Members</span></div>
                   <span id="icon-${boxId}" class="text-blue-400 font-bold text-xs">▼</span>
                 </div>
-
-                <!-- Route Details (Driver on Top, Students Below) -->
                 <div id="${boxId}" class="p-4 hidden space-y-4 bg-[#0a0f1d]">
-                  <div>
-                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Assigned Driver Info</h4>
-                    ${driversHTML}
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold uppercase text-slate-400 mb-2 tracking-wider">Assigned Students List (${group.students.length})</h4>
-                    ${studentsHTML}
-                  </div>
+                  <div><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Assigned Driver Info</h4>${driversHTML}</div>
+                  <div><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Assigned Students List (${group.students.length})</h4>${studentsHTML}</div>
                 </div>
               </div>
             `;
@@ -672,25 +478,20 @@ function fetchAndRenderData() {
         }
       }
 
-      // Render Admin Attendance Tables
       if (driverTableBody) {
-        driverTableBody.innerHTML = '';
-        Object.keys(drivers).forEach((username) => {
+        driverTableBody.innerHTML = Object.keys(drivers).map(username => {
           const user = drivers[username];
           const isPresent = driverAtt[username] && driverAtt[username].status === "Present";
-          const badge = isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>';
-          driverTableBody.innerHTML += `<tr class="border-b border-blue-500/10"><td class="p-2.5 font-semibold text-slate-300">${user.name}</td><td class="p-2.5 text-blue-400 font-bold">${user.driverId || username} (Bus: ${user.busNumber || 'N/A'})</td><td class="p-2.5">${badge}</td></tr>`;
-        });
+          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5 text-blue-400 font-bold">${user.driverId || username}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
+        }).join('') || '<tr><td colspan="3" class="p-3 text-center text-slate-500">No drivers</td></tr>';
       }
 
       if (studentTableBody) {
-        studentTableBody.innerHTML = '';
-        Object.keys(students).forEach((username) => {
+        studentTableBody.innerHTML = Object.keys(students).map(username => {
           const user = students[username];
           const isPresent = studentAtt[username] && studentAtt[username].status === "Present";
-          const badge = isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>';
-          studentTableBody.innerHTML += `<tr class="border-b border-blue-500/10"><td class="p-2.5 font-semibold text-slate-300">${user.name}</td><td class="p-2.5 text-slate-400">${user.studentId || 'N/A'}</td><td class="p-2.5 text-slate-400">${user.course || 'N/A'}</td><td class="p-2.5">${badge}</td></tr>`;
-        });
+          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5">${user.studentId || 'N/A'}</td><td class="p-2.5">${user.course || 'N/A'}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
+        }).join('') || '<tr><td colspan="4" class="p-3 text-center text-slate-500">No students</td></tr>';
       }
     });
   });
@@ -700,31 +501,19 @@ function sendWarning(event) {
   if (event) event.preventDefault();
   const msg = document.getElementById('warningMessage').value.trim();
   if (!msg) return;
-  db.ref('liveBus/warning').set(msg).then(() => {
-    alert("Warning successfully broadcasted!");
-    document.getElementById('warningForm').reset();
-  });
+  db.ref('liveBus/warning').set(msg).then(() => { alert("Warning broadcasted!"); document.getElementById('warningForm').reset(); });
 }
-
-function clearWarning() {
-  db.ref('liveBus/warning').remove();
-}
-
+function clearWarning() { db.ref('liveBus/warning').remove(); }
 function listenForWarnings() {
   db.ref('liveBus/warning').on('value', (snapshot) => {
     const warningMsg = snapshot.val();
-    const driverBanner = document.getElementById('driverWarningBanner');
-    const driverText = document.getElementById('driverWarningText');
-    const studentBanner = document.getElementById('studentWarningBanner');
-    const studentText = document.getElementById('studentWarningText');
-
-    if (warningMsg) {
-      if (driverBanner) { driverText.innerText = warningMsg; driverBanner.classList.remove('hidden'); }
-      if (studentBanner) { studentText.innerText = warningMsg; studentBanner.classList.remove('hidden'); }
-    } else {
-      if (driverBanner) driverBanner.classList.add('hidden');
-      if (studentBanner) studentBanner.classList.add('hidden');
-    }
+    ['driverWarningBanner', 'studentWarningBanner'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (warningMsg) { el.querySelector('span').innerText = warningMsg; el.classList.remove('hidden'); }
+        else { el.classList.add('hidden'); }
+      }
+    });
   });
 }
 
@@ -732,18 +521,16 @@ function listenForWarnings() {
 // DRIVER DASHBOARD
 // ==========================================
 let watchId = null;
-
 function initDriverDashboard(userData) {
   if (userData) {
-    if (document.getElementById('driverNameDisplay')) document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
-    if (document.getElementById('driverIdDisplay')) document.getElementById('driverIdDisplay').innerText = userData.driverId || "N/A";
-    if (document.getElementById('driverBusNumberDisplay')) document.getElementById('driverBusNumberDisplay').innerText = userData.busNumber || "N/A";
+    document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
+    document.getElementById('driverIdDisplay').innerText = userData.driverId || "N/A";
+    document.getElementById('driverBusNumberDisplay').innerText = userData.busNumber || "N/A";
+    document.getElementById('driverPhoneDisplay').innerText = userData.phone || "Not set";
   }
 
-  // Check Driver Self Attendance Status
   checkDriverSelfAttendanceStatus();
 
-  // Load Students assigned to Driver's Route
   const driverRoute = (userData && userData.route) ? userData.route.trim().toLowerCase() : "";
   const today = getTodayDateString();
 
@@ -754,35 +541,28 @@ function initDriverDashboard(userData) {
 
     db.ref(`attendance/students/${today}`).on('value', (attSnapshot) => {
       const todayAttendance = attSnapshot.val() || {};
-
       if (!tableBody) return;
       tableBody.innerHTML = '';
 
       let matchingStudents = [];
-
-      Object.keys(students).forEach((username) => {
+      Object.keys(students).forEach(username => {
         const student = students[username];
         const studentRoute = (student.route || "").trim().toLowerCase();
-        
         if (!driverRoute || studentRoute === driverRoute || studentRoute.includes(driverRoute) || driverRoute.includes(studentRoute)) {
           matchingStudents.push(student);
         }
       });
 
       if (badge) badge.innerText = `${matchingStudents.length} Students`;
-
       if (matchingStudents.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-zinc-500">No students registered on your route.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-zinc-500">No students on your route.</td></tr>';
         return;
       }
 
-      matchingStudents.forEach((student) => {
+      matchingStudents.forEach(student => {
         const attRecord = todayAttendance[student.username];
-        const currentStatus = attRecord ? attRecord.status : "Not Marked";
-
-        let statusBadge = `<span class="text-zinc-500">Pending</span>`;
-        if (currentStatus === "Present") statusBadge = `<span class="text-emerald-400 font-bold">Present ✅</span>`;
-        if (currentStatus === "Absent") statusBadge = `<span class="text-red-400 font-bold">Absent ❌</span>`;
+        const currentStatus = attRecord ? attRecord.status : "Pending";
+        let statusBadge = currentStatus === "Present" ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : currentStatus === "Absent" ? '<span class="text-red-400 font-bold">Absent ❌</span>' : '<span class="text-zinc-500">Pending</span>';
 
         tableBody.innerHTML += `
           <tr class="border-b border-zinc-800 hover:bg-zinc-900/50">
@@ -791,8 +571,8 @@ function initDriverDashboard(userData) {
             <td class="p-3 text-slate-400">${student.course || 'N/A'}</td>
             <td class="p-3 text-center">
               <div class="flex justify-center items-center gap-2">
-                <button onclick="driverMarkStudentAttendance('${student.username}', 'Present')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase">Present</button>
-                <button onclick="driverMarkStudentAttendance('${student.username}', 'Absent')" class="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase">Absent</button>
+                <button onclick="driverMarkStudentAttendance('${student.username}', 'Present')" class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Present</button>
+                <button onclick="driverMarkStudentAttendance('${student.username}', 'Absent')" class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Absent</button>
               </div>
               <div class="mt-1 text-[11px]">${statusBadge}</div>
             </td>
@@ -802,92 +582,122 @@ function initDriverDashboard(userData) {
     });
   });
 
-  const startBtn = document.getElementById('startBtn');
-  const stopBtn = document.getElementById('stopBtn');
+  document.getElementById('startBtn').onclick = () => {
+    if (!navigator.geolocation) return alert("Geolocation not supported.");
+    alert("GPS Broadcasting Started!");
+    watchId = navigator.geolocation.watchPosition((position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const speed = position.coords.speed || 0;
+      document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
 
-  if (startBtn) {
-    startBtn.onclick = () => {
-      if (!navigator.geolocation) {
-        alert("Geolocation not supported.");
-        return;
-      }
-      alert("GPS Broadcasting Started!");
-      watchId = navigator.geolocation.watchPosition((position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const speed = position.coords.speed || 0;
+      db.ref(`liveBus/buses/${userData.username}`).set({
+        lat, lng, speed, driver: userData.username, driverName: userData.name, busNumber: userData.busNumber, route: userData.route, updatedAt: Date.now()
+      });
+    }, (error) => alert("Location error: " + error.message), { enableHighAccuracy: true });
+  };
 
-        if (document.getElementById('speedDisplay')) document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
-
-        const driverId = userData ? userData.username : "driver_default";
-        db.ref(`liveBus/buses/${driverId}`).set({
-          lat: lat,
-          lng: lng,
-          speed: speed,
-          driver: driverId,
-          driverName: userData ? userData.name : "Driver",
-          busNumber: userData ? userData.busNumber : "BUS-01",
-          route: userData ? userData.route : "College Route",
-          updatedAt: Date.now()
-        });
-      }, (error) => {
-        alert("Location error: " + error.message);
-      }, { enableHighAccuracy: true });
-    };
-  }
-
-  if (stopBtn) {
-    stopBtn.onclick = () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-        db.ref(`liveBus/buses/${userData.username}`).remove();
-        alert("Broadcast stopped.");
-      }
-    };
-  }
+  document.getElementById('stopBtn').onclick = () => {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+      db.ref(`liveBus/buses/${userData.username}`).remove();
+      alert("Broadcast stopped.");
+    }
+  };
 }
 
 // ==========================================
-// STUDENT DASHBOARD
+// STUDENT DASHBOARD (Dynamic Sync)
 // ==========================================
 let studentMap = null;
 let studentBusMarker = null;
 
 function initStudentDashboard(userData) {
   if (userData) {
-    if (document.getElementById('studentNameDisplay')) document.getElementById('studentNameDisplay').innerText = userData.name || userData.username;
-    if (document.getElementById('studentIdDisplay')) document.getElementById('studentIdDisplay').innerText = userData.studentId || "N/A";
-    if (document.getElementById('studentCourseDisplay')) document.getElementById('studentCourseDisplay').innerText = userData.course || "N/A";
+    document.getElementById('studentNameDisplay').innerText = userData.name || userData.username;
+    document.getElementById('studentIdDisplay').innerText = userData.studentId || "N/A";
+    document.getElementById('studentCourseDisplay').innerText = userData.course || "N/A";
   }
 
   checkMyAttendanceStatus();
   loadStudentAttendanceHistory();
 
+  const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
+
+  // Dynamic Driver Details & Route Timetable Sync
+  db.ref('users/drivers').on('value', (snapshot) => {
+    const drivers = snapshot.val() || {};
+    let assignedDriver = null;
+
+    Object.keys(drivers).forEach(username => {
+      const drv = drivers[username];
+      if (drv.route && drv.route.trim().toLowerCase() === studentRoute.toLowerCase()) {
+        assignedDriver = drv;
+      }
+    });
+
+    const contactBox = document.getElementById('studentDriverContactInfo');
+    const callBtn = document.getElementById('driverCallButton');
+    const timetableBox = document.getElementById('routeTimetableList');
+
+    if (assignedDriver) {
+      contactBox.innerHTML = `
+        <p>Driver: <strong class="text-white">${assignedDriver.name}</strong></p>
+        <p>Bus No: <strong class="text-blue-400">${assignedDriver.busNumber || 'N/A'}</strong></p>
+        <p>Phone: <strong class="text-slate-200">${assignedDriver.phone || 'N/A'}</strong></p>
+      `;
+
+      if (assignedDriver.phone) {
+        callBtn.href = `tel:${assignedDriver.phone}`;
+        callBtn.classList.remove('hidden');
+      } else {
+        callBtn.classList.add('hidden');
+      }
+
+      // Populate Route Timetable dynamically
+      if (timetableBox) {
+        if (assignedDriver.schedule) {
+          const stops = assignedDriver.schedule.split(',');
+          timetableBox.innerHTML = stops.map(stop => `
+            <div class="flex items-center gap-3 border-l-2 border-blue-500 pl-3 py-1">
+              <div><strong class="text-slate-200">${stop.trim()}</strong></div>
+            </div>
+          `).join('');
+        } else {
+          timetableBox.innerHTML = `<p class="text-slate-500 italic">No specific schedule set by Admin.</p>`;
+        }
+      }
+    } else {
+      contactBox.innerHTML = `<p class="text-slate-500">No driver assigned to route yet.</p>`;
+      callBtn.classList.add('hidden');
+      if (timetableBox) timetableBox.innerHTML = `<p class="text-slate-500 italic">No route schedule available.</p>`;
+    }
+  });
+
   if (!studentMap && document.getElementById('studentMap')) {
     studentMap = L.map('studentMap').setView([28.6139, 77.2090], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(studentMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(studentMap);
   }
 
-  const studentRoute = (userData && userData.route) ? userData.route.trim().toLowerCase() : "";
-
+  // Live Map & Proximity Alert
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const etaDisplay = document.getElementById('busArrivalTimeDisplay');
+    const proximityBanner = document.getElementById('proximityAlertBanner');
 
     if (!buses) {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
-      if (etaDisplay) etaDisplay.innerText = "Bus ETA: Not Active";
+      etaDisplay.innerText = "Bus ETA: Not Active";
+      if (proximityBanner) proximityBanner.classList.add('hidden');
       return;
     }
 
     let foundBus = null;
-    Object.keys(buses).forEach((driverKey) => {
+    Object.keys(buses).forEach(driverKey => {
       const bus = buses[driverKey];
       const busRoute = (bus.route || "").trim().toLowerCase();
-      if (!studentRoute || busRoute === studentRoute || busRoute.includes(studentRoute) || studentRoute.includes(busRoute)) {
+      if (!studentRoute || busRoute === studentRoute.toLowerCase() || busRoute.includes(studentRoute.toLowerCase())) {
         foundBus = bus;
       }
     });
@@ -896,9 +706,7 @@ function initStudentDashboard(userData) {
       const lat = foundBus.lat;
       const lng = foundBus.lng;
       const busNo = foundBus.busNumber || "Bus";
-      const routeName = foundBus.route || "";
-
-      const popupContent = `<b>Bus: ${busNo}</b><br>Route: ${routeName}<br>Driver: ${foundBus.driverName}`;
+      const popupContent = `<b>Bus: ${busNo}</b><br>Route: ${foundBus.route}<br>Driver: ${foundBus.driverName}`;
 
       if (!studentBusMarker) {
         studentBusMarker = L.marker([lat, lng]).addTo(studentMap).bindPopup(popupContent);
@@ -908,13 +716,23 @@ function initStudentDashboard(userData) {
       }
       studentMap.setView([lat, lng], 15);
 
-      if (etaDisplay) {
-        const randomEta = Math.floor(Math.random() * 10) + 3; 
-        etaDisplay.innerText = `Bus ETA: ~${randomEta} mins (${busNo})`;
+      etaDisplay.innerText = `Bus ETA: ~5 mins (${busNo})`;
+
+      // Proximity Calculation
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const dist = calculateDistanceKm(pos.coords.latitude, pos.coords.longitude, lat, lng);
+          if (dist <= 1.5) {
+            if (proximityBanner) proximityBanner.classList.remove('hidden');
+          } else {
+            if (proximityBanner) proximityBanner.classList.add('hidden');
+          }
+        });
       }
     } else {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
-      if (etaDisplay) etaDisplay.innerText = "Bus ETA: Bus offline";
+      etaDisplay.innerText = "Bus ETA: Bus offline";
+      if (proximityBanner) proximityBanner.classList.add('hidden');
     }
   });
 }
