@@ -24,7 +24,7 @@ let currentUserData = null;
 let currentRole = null;
 let proximityDismissed = false;
 let stopArrivalDismissed = false;
-let routeParsedStops = []; // Stores stops with coordinates parsed from schedule
+let selectedCurrentStop = "None";
 
 function getTodayDateString() {
   const d = new Date();
@@ -451,6 +451,34 @@ function clearEmergencyAlerts() {
   db.ref(`liveBus/emergencies`).remove().then(() => alert("Alerts dismissed."));
 }
 
+// Driver Trigger: Announce Bus Arrived at Selected Stop
+function sendBusArrivedAnnouncement() {
+  if (!currentUserData || currentRole !== 'driver') return;
+  if (!selectedCurrentStop || selectedCurrentStop === "None") {
+    return alert("Kripya pehle niche schedule list mein se stop par click karke select karein!");
+  }
+
+  const arrivalObj = {
+    driver: currentUserData.username,
+    driverName: currentUserData.name,
+    busNumber: currentUserData.busNumber || "Bus",
+    route: currentUserData.route,
+    stopName: selectedCurrentStop,
+    timestamp: Date.now()
+  };
+
+  db.ref(`liveBus/stopArrivals/${currentUserData.route}`).set(arrivalObj).then(() => {
+    alert(`📢 Announcement sent! Bus Arrived at: ${selectedCurrentStop}`);
+  });
+}
+
+// Select Stop on Driver Panel Checklist
+function selectDriverStop(stopName) {
+  selectedCurrentStop = stopName;
+  const displayEl = document.getElementById('driverActiveStopDisplay');
+  if (displayEl) displayEl.innerText = `🛑 Selected Stop: ${stopName}`;
+}
+
 // ==========================================
 // ADMIN DASHBOARD
 // ==========================================
@@ -635,7 +663,7 @@ function fetchAndRenderData() {
         studentTableBody.innerHTML = Object.keys(students).map(username => {
           const user = students[username];
           const isPresent = studentAtt[username] && studentAtt[username].status === "Present";
-          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5">${user.studentId || 'N/A'}</td><td class="p-2.5">${user.course || 'N/A'}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
+          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5 text-studentId || 'N/A'">${user.studentId || 'N/A'}</td><td class="p-2.5">${user.course || 'N/A'}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
         }).join('') || '<tr><td colspan="4" class="p-3 text-center text-slate-500">No students</td></tr>';
       }
     });
@@ -663,31 +691,9 @@ function listenForWarnings() {
 }
 
 // ==========================================
-// DRIVER DASHBOARD WITH AUTO STOP DETECTION
+// DRIVER DASHBOARD
 // ==========================================
 let watchId = null;
-let lastDetectedStop = "";
-
-function parseDriverSchedule(scheduleText) {
-  routeParsedStops = [];
-  if (!scheduleText) return;
-  const lines = scheduleText.split('\n');
-  lines.forEach(line => {
-    // Format expected: Stop Name | lat, lng (e.g. Sector 18 | 28.57, 77.32)
-    if (line.includes('|')) {
-      const parts = line.split('|');
-      const stopName = parts[0].trim();
-      const coords = parts[1].trim().split(',');
-      if (coords.length === 2) {
-        const lat = parseFloat(coords[0]);
-        const lng = parseFloat(coords[1]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          routeParsedStops.push({ name: stopName, lat, lng });
-        }
-      }
-    }
-  });
-}
 
 function initDriverDashboard(userData) {
   if (userData) {
@@ -695,9 +701,19 @@ function initDriverDashboard(userData) {
     document.getElementById('driverIdDisplay').innerText = userData.driverId || "N/A";
     document.getElementById('driverBusNumberDisplay').innerText = userData.busNumber || "N/A";
     document.getElementById('driverPhoneDisplay').innerText = userData.phone || "Not set";
-    document.getElementById('driverRouteTitleDisplay').innerText = userData.route || "Route";
 
-    parseDriverSchedule(userData.schedule);
+    const stopsListEl = document.getElementById('driverClickableStopsList');
+    if (userData.schedule && stopsListEl) {
+      const lines = userData.schedule.split('\n').map(s => s.trim()).filter(Boolean);
+      stopsListEl.innerHTML = lines.map(line => `
+        <div onclick="selectDriverStop('${line.replace(/'/g, "\\'")}')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl cursor-pointer flex justify-between items-center transition">
+          <span class="text-slate-200 font-semibold">${line}</span>
+          <span class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">Select 📍</span>
+        </div>
+      `).join('');
+    } else if (stopsListEl) {
+      stopsListEl.innerHTML = `<span class="text-zinc-500 italic">No schedule set by admin.</span>`;
+    }
   }
 
   checkDriverSelfAttendanceStatus();
@@ -755,51 +771,13 @@ function initDriverDashboard(userData) {
 
   document.getElementById('startBtn').onclick = () => {
     if (!navigator.geolocation) return alert("Geolocation not supported.");
-    alert("GPS Broadcasting & Auto Stop Detection Started!");
-
+    alert("GPS Broadcasting Started!");
     watchId = navigator.geolocation.watchPosition((position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      const speed = position.coords.speed || 0; // speed in meters/sec
-      const speedKmh = speed * 3.6;
-      document.getElementById('speedDisplay').innerText = speedKmh.toFixed(1) + " km/h";
+      const speed = position.coords.speed || 0;
+      document.getElementById('speedDisplay').innerText = (speed * 3.6).toFixed(1) + " km/h";
 
-      // Check if bus has stopped near any predefined stop (within 100 meters i.e 0.1 km and speed < 3 km/h)
-      let detectedStopName = "";
-      if (speedKmh < 3.0 && routeParsedStops.length > 0) {
-        for (let stop of routeParsedStops) {
-          const distKm = calculateDistanceKm(lat, lng, stop.lat, stop.lng);
-          if (distKm <= 0.1) { // within 100 meters of the stop coordinate
-            detectedStopName = stop.name;
-            break;
-          }
-        }
-      }
-
-      const stopDisplayEl = document.getElementById('driverCurrentDetectedStop');
-      if (detectedStopName) {
-        stopDisplayEl.innerText = `🛑 Stopped at: ${detectedStopName}`;
-        
-        // Trigger automated stop arrival announcement if it's a new stop
-        if (lastDetectedStop !== detectedStopName) {
-          lastDetectedStop = detectedStopName;
-          db.ref(`liveBus/stopArrivals/${userData.route}`).set({
-            driver: userData.username,
-            driverName: userData.name,
-            busNumber: userData.busNumber || "Bus",
-            route: userData.route,
-            stopName: detectedStopName,
-            timestamp: Date.now()
-          });
-        }
-      } else {
-        stopDisplayEl.innerText = "Bus in transit / moving";
-        if (speedKmh >= 5.0) {
-          lastDetectedStop = ""; // Reset when bus moves away
-        }
-      }
-
-      // Push Live GPS Data
       db.ref(`liveBus/buses/${userData.username}`).set({
         lat, lng, speed, driver: userData.username, driverName: userData.name, busNumber: userData.busNumber, route: userData.route, updatedAt: Date.now()
       });
@@ -837,7 +815,7 @@ function initStudentDashboard(userData) {
   const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
   const studentPickup = (userData && userData.pickupStop) ? userData.pickupStop.trim().toLowerCase() : "";
 
-  // Listen for Automatic Stop Arrival from Driver's GPS Geofencing
+  // Listen for Stop Arrival Announcement with Stop Name from Driver ("Please get ready" removed)
   db.ref(`liveBus/stopArrivals`).on('value', (snapshot) => {
     const arrivals = snapshot.val() || {};
     const arrivalBanner = document.getElementById('busArrivedStopBanner');
