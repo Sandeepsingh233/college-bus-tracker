@@ -166,7 +166,7 @@
                 </div>
             </form>
             
-            <!-- Add User Form (Updated with Driver Phone & Timetable) -->
+            <!-- Add User Form -->
             <form id="addUserForm" onsubmit="addNewUser(event)" class="admin-card p-6 rounded-2xl space-y-4">
                 <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider border-b border-blue-500/20 pb-2">Create New Driver / Student Account</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,7 +194,7 @@
                         <input type="text" id="newRoute" required class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. Route 12 - Campus to City">
                     </div>
 
-                    <!-- Driver-Specific Dynamic Inputs -->
+                    <!-- Driver Fields (with multiline textarea handler) -->
                     <div id="driverFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Driver ID</label>
@@ -214,7 +214,8 @@
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Route Timetable / Stops Schedule</label>
-                            <textarea id="newSchedule" rows="2" class="admin-input w-full rounded-xl p-3 text-xs outline-none" placeholder="e.g. 07:30 AM - Main Gate, 07:50 AM - City Center, 08:20 AM - Campus Block"></textarea>
+                            <textarea id="newSchedule" rows="3" onkeydown="handleScheduleKeydown(event)" class="admin-input w-full rounded-xl p-3 text-xs outline-none" placeholder="07:30 AM - Main Gate&#10;07:50 AM - City Center&#10;08:20 AM - College Block"></textarea>
+                            <span class="text-[10px] text-slate-500 mt-1 block">💡 Note: Agli line par jaane ke liye Enter dabayein.</span>
                         </div>
                     </div>
 
@@ -232,7 +233,6 @@
                 <button type="submit" class="admin-btn-blue w-full font-black py-3 rounded-xl uppercase tracking-wider">Create Account</button>
             </form>
 
-            <!-- Route-Wise Registered Users Cards Container -->
             <div class="admin-card p-6 rounded-2xl space-y-4">
                 <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider">Registered Routes & Assigned Fleet Info</h2>
                 <div id="routeCardsContainer" class="space-y-4">
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    <!-- ==================== DRIVER DASHBOARD (Uber-Inspired Theme) ==================== -->
+    <!-- ==================== DRIVER DASHBOARD ==================== -->
     <div id="driverDashboard" style="display: none;" class="uber-theme min-h-screen p-6 flex justify-center items-start">
         <div class="max-w-2xl w-full space-y-6">
             <div class="uber-card p-6 rounded-3xl space-y-4">
