@@ -23,6 +23,7 @@ const ADMIN_CREDENTIALS = {
 let currentUserData = null;
 let currentRole = null;
 
+// Helper: Today's Date String (YYYY-MM-DD)
 function getTodayDateString() {
   const d = new Date();
   const year = d.getFullYear();
@@ -31,6 +32,7 @@ function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
+// Toggle Admin Add User Form Fields
 function toggleUserFields() {
   const role = document.getElementById('newRole').value;
   const driverFields = document.getElementById('driverFields');
@@ -44,6 +46,7 @@ function toggleUserFields() {
   }
 }
 
+// Accordion Toggle for Admin Route Cards
 function toggleRouteBox(boxId) {
   const content = document.getElementById(boxId);
   const icon = document.getElementById(`icon-${boxId}`);
@@ -58,8 +61,9 @@ function toggleRouteBox(boxId) {
   }
 }
 
+// Distance Calculation (Haversine Formula in KM)
 function calculateDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
+  const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a = 
@@ -80,51 +84,67 @@ async function handleLogin(event) {
   const username = document.getElementById('usernameInput').value.trim();
   const password = document.getElementById('passwordInput').value.trim();
 
-  if (!username || !password) return alert("Kripya username aur password dono bharein!");
+  if (!username || !password) {
+    alert("Kripya username aur password dono bharein!");
+    return;
+  }
 
   if (role === "admin") {
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       showDashboard("admin");
-    } else alert("Galat Admin credentials hain!");
+    } else {
+      alert("Galat Admin credentials hain!");
+    }
   } 
   else if (role === "driver") {
     const snapshot = await db.ref(`users/drivers/${username}`).once('value');
     const userData = snapshot.val();
+    
     if (userData && userData.password === password) {
       currentUserData = userData;
       currentRole = "driver";
       showDashboard("driver", userData);
-    } else alert("Driver username ya password galat hai!");
+    } else {
+      alert("Driver username ya password galat hai!");
+    }
   } 
   else if (role === "student") {
     const snapshot = await db.ref(`users/students/${username}`).once('value');
     const userData = snapshot.val();
+    
     if (userData && userData.password === password) {
       currentUserData = userData;
       currentRole = "student";
       showDashboard("student", userData);
-    } else alert("Student username ya password galat hai!");
+    } else {
+      alert("Student username ya password galat hai!");
+    }
   }
 }
 
 function showDashboard(role, userData = null) {
-  document.getElementById('loginSection').style.display = 'none';
+  const loginSection = document.getElementById('loginSection');
+  if (loginSection) loginSection.style.display = 'none';
 
   if (role === 'admin') {
-    document.getElementById('adminDashboard').style.display = 'block';
+    const adminDash = document.getElementById('adminDashboard');
+    if (adminDash) adminDash.style.display = 'block';
     initAdminDashboard();
   } else if (role === 'driver') {
-    document.getElementById('driverDashboard').style.display = 'block';
+    const driverDash = document.getElementById('driverDashboard');
+    if (driverDash) driverDash.style.display = 'block';
     initDriverDashboard(userData);
   } else if (role === 'student') {
-    document.getElementById('studentDashboard').style.display = 'block';
+    const studentDash = document.getElementById('studentDashboard');
+    if (studentDash) studentDash.style.display = 'block';
     initStudentDashboard(userData);
   }
+  
   listenForWarnings();
 }
 
 // ==========================================
-// ATTENDANCE LOGIC
+// ATTENDANCE MANAGEMENT
 // ==========================================
 function markDriverSelfAttendance() {
   if (!currentUserData || currentRole !== 'driver') return;
@@ -132,11 +152,13 @@ function markDriverSelfAttendance() {
   const username = currentUserData.username;
 
   const attendanceObj = {
-    username, name: currentUserData.name,
+    username: username,
+    name: currentUserData.name,
     driverId: currentUserData.driverId || "N/A",
     busNumber: currentUserData.busNumber || "N/A",
     route: currentUserData.route || "N/A",
-    status: "Present", timestamp: Date.now()
+    status: "Present",
+    timestamp: Date.now()
   };
 
   db.ref(`attendance/drivers/${today}/${username}`).set(attendanceObj).then(() => {
@@ -156,10 +178,20 @@ function checkDriverSelfAttendanceStatus() {
     const btn = document.getElementById('markDriverSelfAttendanceBtn');
 
     if (data && data.status === "Present") {
-      if (statusText) statusText.innerText = "Status: Present Today ✅";
-      if (btn) { btn.innerText = "Marked ✅"; btn.disabled = true; btn.style.opacity = '0.5'; }
+      if (statusText) {
+        statusText.innerText = "Status: Present Today ✅";
+        statusText.className = "text-xs font-bold text-emerald-400 font-mono mt-0.5";
+      }
+      if (btn) { 
+        btn.innerText = "Marked ✅"; 
+        btn.disabled = true; 
+        btn.style.opacity = '0.5'; 
+      }
     } else {
-      if (statusText) statusText.innerText = "Status: Not Marked Yet ❌";
+      if (statusText) {
+        statusText.innerText = "Status: Not Marked Yet ❌";
+        statusText.className = "text-xs text-slate-400 font-mono mt-0.5";
+      }
     }
   });
 }
@@ -250,7 +282,89 @@ function loadStudentAttendanceHistory() {
 }
 
 // ==========================================
-// USER MANAGEMENT & DYNAMIC FIELDS
+// ADMIN USER SEARCH (FIXED & ROBUST)
+// ==========================================
+async function searchStudentDetails() {
+  const searchId = document.getElementById('searchStudentIdInput').value.trim().toLowerCase();
+  const resultBox = document.getElementById('searchResultBox');
+  
+  if (!searchId) {
+    alert("Kripya Student ID enter karein!");
+    return;
+  }
+
+  const snapshot = await db.ref('users/students').once('value');
+  const students = snapshot.val() || {};
+  let found = null;
+
+  Object.keys(students).forEach(username => {
+    const stu = students[username];
+    const stuId = stu.studentId ? String(stu.studentId).toLowerCase() : "";
+    const uName = username.toLowerCase();
+    
+    if (stuId === searchId || uName === searchId || stuId.includes(searchId)) {
+      found = stu;
+    }
+  });
+
+  resultBox.classList.remove('hidden');
+  if (found) {
+    resultBox.innerHTML = `
+      <h3 class="font-bold text-blue-400 text-base mb-1">Student Found:</h3>
+      <p><strong>Name:</strong> ${found.name || 'N/A'}</p>
+      <p><strong>Student ID:</strong> ${found.studentId || 'N/A'}</p>
+      <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
+      <p><strong>Course:</strong> ${found.course || 'N/A'}</p>
+      <p><strong>Assigned Route:</strong> ${found.route || 'N/A'}</p>
+    `;
+  } else {
+    resultBox.innerHTML = `<p class="text-red-400 font-semibold">No student found matching: "${searchId}"</p>`;
+  }
+}
+
+async function searchDriverDetails() {
+  const searchId = document.getElementById('searchDriverIdInput').value.trim().toLowerCase();
+  const resultBox = document.getElementById('searchResultBox');
+  
+  if (!searchId) {
+    alert("Kripya Driver ID ya Username enter karein!");
+    return;
+  }
+
+  const snapshot = await db.ref('users/drivers').once('value');
+  const drivers = snapshot.val() || {};
+  let found = null;
+
+  Object.keys(drivers).forEach(username => {
+    const drv = drivers[username];
+    const drvId = drv.driverId ? String(drv.driverId).toLowerCase() : "";
+    const uName = username.toLowerCase();
+    const phone = drv.phone ? String(drv.phone).toLowerCase() : "";
+
+    if (drvId === searchId || uName === searchId || phone.includes(searchId) || drvId.includes(searchId)) {
+      found = drv;
+    }
+  });
+
+  resultBox.classList.remove('hidden');
+  if (found) {
+    resultBox.innerHTML = `
+      <h3 class="font-bold text-blue-400 text-base mb-1">Driver Found:</h3>
+      <p><strong>Name:</strong> ${found.name || 'N/A'}</p>
+      <p><strong>Driver ID:</strong> ${found.driverId || 'N/A'}</p>
+      <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
+      <p><strong>Phone:</strong> ${found.phone || 'N/A'}</p>
+      <p><strong>Bus Number:</strong> ${found.busNumber || 'N/A'}</p>
+      <p><strong>Reg. Number:</strong> ${found.regNumber || 'N/A'}</p>
+      <p><strong>Assigned Route:</strong> ${found.route || 'N/A'}</p>
+    `;
+  } else {
+    resultBox.innerHTML = `<p class="text-red-400 font-semibold">No driver found matching: "${searchId}"</p>`;
+  }
+}
+
+// ==========================================
+// USER CREATION & MANAGEMENT
 // ==========================================
 function addNewUser(event) {
   if (event) event.preventDefault();
@@ -287,7 +401,9 @@ function deleteUser(role, username) {
 }
 
 function forceStopBus(driverKey) {
-  if (confirm(`Force stop tracking for '${driverKey}'?`)) db.ref(`liveBus/buses/${driverKey}`).remove();
+  if (confirm(`Force stop tracking for '${driverKey}'?`)) {
+    db.ref(`liveBus/buses/${driverKey}`).remove();
+  }
 }
 
 function sendEmergencyAlert() {
@@ -307,7 +423,7 @@ function clearEmergencyAlerts() {
 }
 
 // ==========================================
-// ADMIN DASHBOARD
+// ADMIN DASHBOARD & REALTIME LISTENERS
 // ==========================================
 let adminMap = null;
 let adminBusMarkers = {};
@@ -503,7 +619,9 @@ function sendWarning(event) {
   if (!msg) return;
   db.ref('liveBus/warning').set(msg).then(() => { alert("Warning broadcasted!"); document.getElementById('warningForm').reset(); });
 }
+
 function clearWarning() { db.ref('liveBus/warning').remove(); }
+
 function listenForWarnings() {
   db.ref('liveBus/warning').on('value', (snapshot) => {
     const warningMsg = snapshot.val();
@@ -521,6 +639,7 @@ function listenForWarnings() {
 // DRIVER DASHBOARD
 // ==========================================
 let watchId = null;
+
 function initDriverDashboard(userData) {
   if (userData) {
     document.getElementById('driverNameDisplay').innerText = userData.name || userData.username;
@@ -608,7 +727,7 @@ function initDriverDashboard(userData) {
 }
 
 // ==========================================
-// STUDENT DASHBOARD (Dynamic Sync)
+// STUDENT DASHBOARD
 // ==========================================
 let studentMap = null;
 let studentBusMarker = null;
@@ -625,7 +744,7 @@ function initStudentDashboard(userData) {
 
   const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
 
-  // Dynamic Driver Details & Route Timetable Sync
+  // Dynamic Driver & Timetable Sync
   db.ref('users/drivers').on('value', (snapshot) => {
     const drivers = snapshot.val() || {};
     let assignedDriver = null;
@@ -655,7 +774,6 @@ function initStudentDashboard(userData) {
         callBtn.classList.add('hidden');
       }
 
-      // Populate Route Timetable dynamically
       if (timetableBox) {
         if (assignedDriver.schedule) {
           const stops = assignedDriver.schedule.split(',');
@@ -680,7 +798,7 @@ function initStudentDashboard(userData) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(studentMap);
   }
 
-  // Live Map & Proximity Alert
+  // Live Tracking & Proximity Alert
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const etaDisplay = document.getElementById('busArrivalTimeDisplay');
@@ -718,7 +836,7 @@ function initStudentDashboard(userData) {
 
       etaDisplay.innerText = `Bus ETA: ~5 mins (${busNo})`;
 
-      // Proximity Calculation
+      // Calculate distance for proximity alert
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
           const dist = calculateDistanceKm(pos.coords.latitude, pos.coords.longitude, lat, lng);
