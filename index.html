@@ -215,7 +215,6 @@
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Route Timetable / Stops Schedule</label>
                             <textarea id="newSchedule" rows="3" onkeydown="handleScheduleKeydown(event)" class="admin-input w-full rounded-xl p-3 text-xs outline-none" placeholder="07:30 AM - Main Gate&#10;07:50 AM - City Center&#10;08:20 AM - College Block"></textarea>
-                            <span class="text-[10px] text-slate-500 mt-1 block">💡 Note: Agli line par jaane ke liye Enter dabayein.</span>
                         </div>
                     </div>
 
@@ -247,7 +246,7 @@
         </div>
     </div>
 
-    <!-- ==================== DRIVER DASHBOARD ==================== -->
+    <!-- ==================== DRIVER DASHBOARD (Added Arrived at Stop Button) ==================== -->
     <div id="driverDashboard" style="display: none;" class="uber-theme min-h-screen p-6 flex justify-center items-start">
         <div class="max-w-2xl w-full space-y-6">
             <div class="uber-card p-6 rounded-3xl space-y-4">
@@ -279,9 +278,13 @@
                     Phone Contact: <strong id="driverPhoneDisplay" class="text-white">-</strong>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button id="startBtn" class="uber-btn py-3 rounded-xl text-xs uppercase font-black tracking-wider">Start Broadcast</button>
                     <button id="stopBtn" class="bg-zinc-800 hover:bg-zinc-700 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider border border-zinc-700">Stop Broadcast</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <button onclick="sendBusArrivedAnnouncement()" class="bg-amber-500 hover:bg-amber-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg">📢 Announce Arrived at Stop</button>
                     <button onclick="sendEmergencyAlert()" class="bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg animate-pulse">🚨 Emergency Alert</button>
                 </div>
             </div>
@@ -326,6 +329,12 @@
         
         <div id="studentWarningBanner" class="hidden bg-red-950 border-b border-red-600 text-red-200 px-4 py-2 text-center text-xs font-mono font-bold">
             🚨 <span id="studentWarningText"></span>
+        </div>
+
+        <!-- Bus Arrived at Stop Banner (Triggered by Driver) -->
+        <div id="busArrivedStopBanner" class="hidden bg-amber-500 text-black px-4 py-3 flex justify-between items-center text-xs font-black uppercase tracking-wider shadow-2xl animate-pulse">
+            <span>🚨 BUS HAS ARRIVED AT YOUR PICKUP STOP! PLEASE GET READY!</span>
+            <button onclick="dismissStopArrivalAlert()" class="bg-black text-white px-3 py-1 rounded-lg text-[10px] font-bold">✕ Dismiss</button>
         </div>
 
         <!-- Proximity Alert Banner with Dismiss Button -->
