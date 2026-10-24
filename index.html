@@ -41,7 +41,6 @@
     <!-- ==================== ADMIN DASHBOARD (Black & Blue Theme) ==================== -->
     <div id="adminDashboard" style="display: none;" class="admin-theme min-h-screen p-6">
         <div class="max-w-6xl mx-auto space-y-6">
-            <!-- Header -->
             <div class="admin-card p-6 rounded-2xl flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-black text-blue-400 uppercase tracking-wider">Admin Control Panel</h1>
@@ -167,7 +166,7 @@
                 </div>
             </form>
             
-            <!-- Add User Form -->
+            <!-- Add User Form (Updated with Driver Phone & Timetable) -->
             <form id="addUserForm" onsubmit="addNewUser(event)" class="admin-card p-6 rounded-2xl space-y-4">
                 <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider border-b border-blue-500/20 pb-2">Create New Driver / Student Account</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,10 +194,15 @@
                         <input type="text" id="newRoute" required class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. Route 12 - Campus to City">
                     </div>
 
-                    <div id="driverFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Driver-Specific Dynamic Inputs -->
+                    <div id="driverFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Driver ID</label>
                             <input type="text" id="newDriverId" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. DRV-01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Phone Number</label>
+                            <input type="tel" id="newPhone" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. +91 9876543210">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Bus Number</label>
@@ -207,6 +211,10 @@
                         <div>
                             <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Registration Number</label>
                             <input type="text" id="newRegNumber" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. DL-01-AB-1234">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Route Timetable / Stops Schedule</label>
+                            <textarea id="newSchedule" rows="2" class="admin-input w-full rounded-xl p-3 text-xs outline-none" placeholder="e.g. 07:30 AM - Main Gate, 07:50 AM - City Center, 08:20 AM - Campus Block"></textarea>
                         </div>
                     </div>
 
@@ -247,7 +255,6 @@
                     <span class="bg-zinc-800 text-yellow-400 font-bold text-xs px-3 py-1 rounded-full uppercase">UBER FLEET</span>
                 </div>
 
-                <!-- Driver Self Attendance Marker Box -->
                 <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-wrap justify-between items-center gap-2">
                     <div>
                         <h3 class="font-bold text-white text-xs uppercase tracking-wider">My Daily Attendance</h3>
@@ -256,12 +263,15 @@
                     <button id="markDriverSelfAttendanceBtn" onclick="markDriverSelfAttendance()" class="uber-btn px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider">Mark My Attendance</button>
                 </div>
                 
-                <!-- Driver Specs Box -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2 bg-zinc-900 p-4 rounded-2xl text-xs font-mono border border-zinc-800 text-slate-300">
                     <div><span class="text-slate-500 block">Driver Name</span><strong id="driverNameDisplay" class="text-white">-</strong></div>
                     <div><span class="text-slate-500 block">Driver ID</span><strong id="driverIdDisplay" class="text-yellow-400">-</strong></div>
                     <div><span class="text-slate-500 block">Bus Number</span><strong id="driverBusNumberDisplay" class="text-white">-</strong></div>
                     <div><span class="text-slate-500 block">Current Speed</span><strong id="speedDisplay" class="text-emerald-400">0.0 km/h</strong></div>
+                </div>
+
+                <div class="bg-zinc-900/60 p-3 rounded-xl text-xs font-mono border border-zinc-800/80 text-slate-400">
+                    Phone Contact: <strong id="driverPhoneDisplay" class="text-white">-</strong>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -271,7 +281,6 @@
                 </div>
             </div>
 
-            <!-- Route Student Attendance Marking Section for Driver -->
             <div class="uber-card p-6 rounded-3xl space-y-4 border border-zinc-800">
                 <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
                     <h2 class="text-lg font-bold text-white uppercase tracking-wider">Mark Route Students Attendance</h2>
@@ -299,8 +308,9 @@
         </div>
     </div>
 
-    <!-- ==================== STUDENT DASHBOARD (70-20-10 Navy Blue Rules) ==================== -->
+    <!-- ==================== STUDENT DASHBOARD ==================== -->
     <div id="studentDashboard" style="display: none;" class="min-h-screen flex flex-col bg-[#0a0f1d] text-slate-100">
+        
         <header class="bg-[#111827] border-b border-slate-800 p-4 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
                 <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></div>
@@ -311,6 +321,10 @@
         
         <div id="studentWarningBanner" class="hidden bg-red-950 border-b border-red-600 text-red-200 px-4 py-2 text-center text-xs font-mono font-bold">
             🚨 <span id="studentWarningText"></span>
+        </div>
+
+        <div id="proximityAlertBanner" class="hidden bg-blue-600 text-white px-4 py-2 text-center text-xs font-black uppercase tracking-wider shadow-md animate-bounce">
+            🚌 Proximity Alert: Your bus is arriving near your location within ~1.5 km!
         </div>
 
         <div class="bg-[#111827] border-b border-slate-800 p-3 flex flex-wrap justify-between items-center px-6 gap-2">
@@ -324,26 +338,51 @@
             </div>
         </div>
 
-        <div class="flex-grow flex flex-col md:flex-row h-[calc(100vh-125px)] bg-[#0a0f1d]">
+        <div class="flex-grow flex flex-col md:flex-row h-[calc(100vh-140px)] bg-[#0a0f1d]">
             <div id="studentMap" class="w-full md:w-2/3 h-full z-0"></div>
             
-            <div class="w-full md:w-1/3 bg-[#111827] border-l border-slate-800 p-5 overflow-y-auto shadow-2xl">
-                <h3 class="font-extrabold text-blue-400 text-sm uppercase tracking-wider mb-4 border-b border-slate-800 pb-2 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> Attendance History
-                </h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs font-mono">
-                        <thead>
-                            <tr class="bg-[#0a0f1d] text-slate-400 border-b border-slate-800">
-                                <th class="p-3">Date</th>
-                                <th class="p-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentAttendanceHistoryBody">
-                            <tr><td colspan="2" class="p-3 text-center text-slate-500">Loading history...</td></tr>
-                        </tbody>
-                    </table>
+            <div class="w-full md:w-1/3 bg-[#111827] border-l border-slate-800 p-5 overflow-y-auto space-y-6 shadow-2xl">
+                
+                <!-- Driver Contact Card -->
+                <div class="bg-[#0a0f1d] border border-blue-500/30 p-4 rounded-2xl space-y-2">
+                    <h3 class="font-extrabold text-blue-400 text-xs uppercase tracking-wider">Assigned Bus & Driver Contact</h3>
+                    <div id="studentDriverContactInfo" class="text-xs space-y-1 font-mono text-slate-300">
+                        <p>Driver: <strong class="text-white">Loading...</strong></p>
+                        <p>Bus No: <strong class="text-blue-400">-</strong></p>
+                    </div>
+                    <a id="driverCallButton" href="#" class="hidden block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-center text-xs uppercase tracking-wider shadow transition">📞 Call Driver</a>
                 </div>
+
+                <!-- Bus Stops Timetable List -->
+                <div class="bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl space-y-3">
+                    <h3 class="font-extrabold text-blue-400 text-xs uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> Route Stops & Timetable
+                    </h3>
+                    <div id="routeTimetableList" class="space-y-2 text-xs font-mono">
+                        <p class="text-slate-500 italic">Loading route schedule...</p>
+                    </div>
+                </div>
+
+                <!-- Attendance History -->
+                <div class="bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl space-y-3">
+                    <h3 class="font-extrabold text-blue-400 text-xs uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> Attendance History
+                    </h3>
+                    <div class="overflow-x-auto max-h-48">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead>
+                                <tr class="text-slate-500 border-b border-slate-800">
+                                    <th class="p-2">Date</th>
+                                    <th class="p-2">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentAttendanceHistoryBody">
+                                <tr><td colspan="2" class="p-3 text-center text-slate-500">Loading history...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -353,7 +392,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Main JS File -->
     <script src="script.js"></script>
 </body>
 </html>
