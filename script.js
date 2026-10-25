@@ -34,7 +34,47 @@ function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
-// 30-Second Word-By-Word Typewriter Animation
+// 30-SECOND CINEMATIC POPUP REVEAL SEQUENCE
+function runSequentialLoginReveal() {
+  // Step 0: Main Card Popup (0s)
+  setTimeout(() => {
+    document.getElementById('loginMainBox').classList.add('seq-show');
+  }, 200);
+
+  // Step 1: Badge Reveal (3s)
+  setTimeout(() => {
+    document.getElementById('seq-badge').classList.add('seq-show');
+  }, 3000);
+
+  // Step 2: VERMA BUS PORTAL Title Reveal (5s)
+  setTimeout(() => {
+    document.getElementById('seq-title').classList.add('seq-show');
+  }, 5000);
+
+  // Step 3: Typewriter Description Reveal (10s to 20s)
+  setTimeout(() => {
+    const typewriterEl = document.getElementById('typewriterText');
+    typewriterEl.classList.add('seq-show');
+    startWordByWordTypewriter();
+  }, 10000);
+
+  // Step 4: Spider-Man Heroic Card Reveal (20s)
+  setTimeout(() => {
+    document.getElementById('seq-hero-card').classList.add('seq-show');
+  }, 20000);
+
+  // Step 5: Role Cards Staggered Popups (23s, 25s, 27s)
+  setTimeout(() => { document.getElementById('card-student').classList.add('seq-show'); }, 23000);
+  setTimeout(() => { document.getElementById('card-driver').classList.add('seq-show'); }, 25000);
+  setTimeout(() => { document.getElementById('card-admin').classList.add('seq-show'); }, 27000);
+
+  // Step 6: Form Reveal (29s - 30s)
+  setTimeout(() => {
+    document.getElementById('seq-form').classList.add('seq-show');
+  }, 29000);
+}
+
+// Typewriter Function (Runs within 10-second duration inside timeline)
 function startWordByWordTypewriter() {
   const targetEl = document.getElementById('typewriterText');
   if (!targetEl) return;
@@ -44,7 +84,7 @@ function startWordByWordTypewriter() {
   
   targetEl.innerHTML = '';
   let currentWordIndex = 0;
-  const delayPerWord = Math.floor(30000 / words.length);
+  const delayPerWord = Math.floor(10000 / words.length); // 10s word sync
 
   const timer = setInterval(() => {
     if (currentWordIndex < words.length) {
@@ -65,7 +105,7 @@ function selectRoleCard(role) {
 
 window.addEventListener('DOMContentLoaded', () => {
   selectRoleCard('student');
-  startWordByWordTypewriter();
+  runSequentialLoginReveal();
 });
 
 // Admin Dashboard Accordion Toggle
