@@ -339,13 +339,13 @@ async function searchStudentDetails() {
   resultBox.classList.remove('hidden');
   if (found) {
     resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-400 text-sm mb-1">Student Found:</h3>
+      <h3 class="font-bold text-cyan-400 text-sm mb-1">Student Found:</h3>
       <p><strong>Name:</strong> ${found.name || 'N/A'}</p>
       <p><strong>Student ID:</strong> ${found.studentId || 'N/A'}</p>
       <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
       <p><strong>Course:</strong> ${found.course || 'N/A'}</p>
       <p><strong>Assigned Route:</strong> ${found.route || 'N/A'}</p>
-      <p><strong>Boarding / Pickup Stop:</strong> <span class="text-blue-400 font-bold">${found.pickupStop || 'Not Set'}</span></p>
+      <p><strong>Boarding / Pickup Stop:</strong> <span class="text-cyan-400 font-bold">${found.pickupStop || 'Not Set'}</span></p>
     `;
   } else {
     resultBox.innerHTML = `<p class="text-red-400 font-semibold">No student found matching: "${searchId}"</p>`;
@@ -373,7 +373,7 @@ async function searchDriverDetails() {
   resultBox.classList.remove('hidden');
   if (found) {
     resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-400 text-sm mb-1">Driver Found:</h3>
+      <h3 class="font-bold text-cyan-400 text-sm mb-1">Driver Found:</h3>
       <p><strong>Name:</strong> ${found.name || 'N/A'}</p>
       <p><strong>Driver ID:</strong> ${found.driverId || 'N/A'}</p>
       <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
@@ -556,8 +556,8 @@ function initAdminDashboard() {
         const bus = buses[driverKey];
         const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
         activeBusTableBody.innerHTML += `
-          <tr class="border-b border-blue-500/10 hover:bg-slate-800/50">
-            <td class="p-2 font-bold text-blue-400">${bus.busNumber || 'N/A'}</td>
+          <tr class="border-b border-cyan-500/10 hover:bg-slate-800/50">
+            <td class="p-2 font-bold text-cyan-400">${bus.busNumber || 'N/A'}</td>
             <td class="p-2 text-slate-300">${driverKey}</td>
             <td class="p-2 text-slate-400">${bus.route || 'Route'}</td>
             <td class="p-2 text-emerald-400 font-mono">${speed} km/h</td>
@@ -572,7 +572,7 @@ function initAdminDashboard() {
       const bus = buses[driverKey];
       if (bus && bus.lat && bus.lng) {
         bounds.push([bus.lat, bus.lng]);
-        const popupText = `<div class="text-xs"><h3 class="font-bold text-blue-400">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
+        const popupText = `<div class="text-xs"><h3 class="font-bold text-cyan-400">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
         if (!adminBusMarkers[driverKey]) {
           adminBusMarkers[driverKey] = L.marker([bus.lat, bus.lng]).addTo(adminMap).bindPopup(popupText);
         } else {
@@ -642,21 +642,21 @@ function fetchAndRenderData() {
 
             let driversAttHTML = group.drivers.map(drv => {
               const isPresent = driverAtt[drv.username] && driverAtt[drv.username].status === "Present";
-              return `<tr class="border-b border-slate-800"><td class="p-2 font-bold text-slate-200">${drv.name} <span class="text-[10px] text-yellow-400">(Driver)</span></td><td class="p-2 text-blue-400 font-mono">${drv.driverId || drv.username}</td><td class="p-2">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
+              return `<tr class="border-b border-slate-800"><td class="p-2 font-bold text-slate-200">${drv.name} <span class="text-[10px] text-amber-400">(Driver)</span></td><td class="p-2 text-cyan-400 font-mono">${drv.driverId || drv.username}</td><td class="p-2">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
             }).join('');
 
             let studentsAttHTML = group.students.map(stu => {
               const isPresent = studentAtt[stu.username] && studentAtt[stu.username].status === "Present";
               const isAbsent = studentAtt[stu.username] && studentAtt[stu.username].status === "Absent";
               const statusBadge = isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : isAbsent ? '<span class="text-red-400 font-bold">Absent ❌</span>' : '<span class="text-slate-500">Not Marked ⏳</span>';
-              return `<tr class="border-b border-slate-800"><td class="p-2 text-slate-300">${stu.name}</td><td class="p-2 text-blue-400 font-mono">${stu.studentId || 'N/A'}</td><td class="p-2">${statusBadge}</td></tr>`;
+              return `<tr class="border-b border-slate-800"><td class="p-2 text-slate-300">${stu.name}</td><td class="p-2 text-cyan-400 font-mono">${stu.studentId || 'N/A'}</td><td class="p-2">${statusBadge}</td></tr>`;
             }).join('');
 
             routeWiseAttendanceContainer.innerHTML += `
-              <div class="bg-[#111827] border border-blue-500/30 rounded-xl overflow-hidden shadow">
+              <div class="bg-[#111827] border border-cyan-500/30 rounded-xl overflow-hidden shadow">
                 <div onclick="toggleRouteBox('${attBoxId}')" class="p-3 bg-slate-900/80 hover:bg-slate-800 cursor-pointer flex justify-between items-center border-b border-slate-800">
-                  <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><h3 class="font-extrabold text-blue-400 text-xs uppercase">${routeName}</h3></div>
-                  <span id="icon-${attBoxId}" class="text-blue-400 font-bold text-xs">▼</span>
+                  <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span><h3 class="font-extrabold text-cyan-400 text-xs uppercase">${routeName}</h3></div>
+                  <span id="icon-${attBoxId}" class="text-cyan-400 font-bold text-xs">▼</span>
                 </div>
                 <div id="${attBoxId}" class="p-3 hidden bg-[#0a0f1d] overflow-x-auto">
                   <table class="w-full text-left text-xs font-mono">
@@ -683,24 +683,24 @@ function fetchAndRenderData() {
             const totalCount = group.drivers.length + group.students.length;
 
             let driversHTML = group.drivers.length > 0 ? group.drivers.map(drv => `
-              <div class="bg-blue-950/40 border border-blue-500/30 p-2.5 rounded-xl mb-2 flex justify-between items-center text-xs">
-                <div><span class="bg-blue-500 text-black font-extrabold px-1.5 py-0.5 rounded text-[10px] mr-2">DRIVER</span><strong>${drv.name}</strong></div>
-                <div class="space-x-2"><span>Bus: <b class="text-blue-400">${drv.busNumber || 'N/A'}</b></span><button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></div>
+              <div class="bg-cyan-950/40 border border-cyan-500/30 p-2.5 rounded-xl mb-2 flex justify-between items-center text-xs">
+                <div><span class="bg-cyan-500 text-black font-extrabold px-1.5 py-0.5 rounded text-[10px] mr-2">DRIVER</span><strong>${drv.name}</strong></div>
+                <div class="space-x-2"><span>Bus: <b class="text-cyan-400">${drv.busNumber || 'N/A'}</b></span><button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></div>
               </div>
             `).join('') : `<p class="text-amber-400 text-xs italic mb-2">⚠️ No Driver assigned.</p>`;
 
             let studentsHTML = group.students.length > 0 ? `
               <table class="w-full text-left text-xs font-mono mt-2">
                 <thead><tr class="bg-slate-900 text-slate-400"><th class="p-2">Name</th><th class="p-2">ID</th><th class="p-2">Pickup Stop 📍</th><th class="p-2">Action</th></tr></thead>
-                <tbody>${group.students.map(stu => `<tr class="border-b border-slate-800"><td class="p-2 font-bold text-slate-200">${stu.name}</td><td class="p-2 text-blue-400">${stu.studentId || 'N/A'}</td><td class="p-2 text-amber-300 font-semibold">${stu.pickupStop || 'Not Set'}</td><td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></td></tr>`).join('')}</tbody>
+                <tbody>${group.students.map(stu => `<tr class="border-b border-slate-800"><td class="p-2 font-bold text-slate-200">${stu.name}</td><td class="p-2 text-cyan-400">${stu.studentId || 'N/A'}</td><td class="p-2 text-amber-300 font-semibold">${stu.pickupStop || 'Not Set'}</td><td class="p-2"><button onclick="deleteUser('student', '${stu.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></td></tr>`).join('')}</tbody>
               </table>
             ` : `<p class="text-slate-500 text-xs italic">No students registered.</p>`;
 
             routeCardsContainer.innerHTML += `
-              <div class="bg-[#111827] border border-blue-500/30 rounded-xl overflow-hidden shadow-lg">
+              <div class="bg-[#111827] border border-cyan-500/30 rounded-xl overflow-hidden shadow-lg">
                 <div onclick="toggleRouteBox('${boxId}')" class="p-3 bg-slate-900/80 hover:bg-slate-800 cursor-pointer flex justify-between items-center border-b border-slate-800">
-                  <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><h3 class="font-extrabold text-blue-400 text-xs uppercase">${routeName}</h3><span class="bg-blue-500/10 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full">${totalCount} Members</span></div>
-                  <span id="icon-${boxId}" class="text-blue-400 font-bold text-xs">▼</span>
+                  <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span><h3 class="font-extrabold text-cyan-400 text-xs uppercase">${routeName}</h3><span class="bg-cyan-500/10 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full">${totalCount} Members</span></div>
+                  <span id="icon-${boxId}" class="text-cyan-400 font-bold text-xs">▼</span>
                 </div>
                 <div id="${boxId}" class="p-3 hidden space-y-3 bg-[#0a0f1d]">
                   <div><h4 class="text-[11px] font-bold uppercase text-slate-400 mb-1">Assigned Driver</h4>${driversHTML}</div>
@@ -754,7 +754,7 @@ function initDriverDashboard(userData) {
       stopsListEl.innerHTML = lines.map(line => `
         <div onclick="selectDriverStop('${line.replace(/'/g, "\\'")}')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl cursor-pointer flex justify-between items-center transition">
           <span class="text-slate-200 font-semibold">${line}</span>
-          <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Select 📍</span>
+          <span class="bg-cyan-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Select 📍</span>
         </div>
       `).join('');
     } else if (stopsListEl) {
@@ -902,7 +902,7 @@ function initStudentDashboard(userData) {
     if (assignedDriver) {
       contactBox.innerHTML = `
         <p>Driver: <strong class="text-white">${assignedDriver.name}</strong></p>
-        <p>Bus No: <strong class="text-blue-400">${assignedDriver.busNumber || 'N/A'}</strong></p>
+        <p>Bus No: <strong class="text-cyan-400">${assignedDriver.busNumber || 'N/A'}</strong></p>
         <p>Phone: <strong class="text-slate-200">${assignedDriver.phone || 'N/A'}</strong></p>
       `;
 
@@ -918,7 +918,7 @@ function initStudentDashboard(userData) {
           const lines = assignedDriver.schedule.split('\n');
           timetableBox.innerHTML = lines.map(line => {
             const isMyStop = studentPickup && line.toLowerCase().includes(studentPickup);
-            const borderClass = isMyStop ? 'border-amber-400 bg-amber-950/30' : 'border-blue-500';
+            const borderClass = isMyStop ? 'border-amber-400 bg-amber-950/30' : 'border-cyan-500';
             const badge = isMyStop ? '<span class="ml-2 bg-amber-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded">MY STOP📍</span>' : '';
             return `
               <div class="flex items-center gap-3 border-l-2 ${borderClass} pl-3 py-1.5 rounded-r-lg">
