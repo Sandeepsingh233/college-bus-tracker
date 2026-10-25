@@ -34,6 +34,29 @@ function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
+// Visual Role Selection Card Logic
+function selectRoleCard(role) {
+  document.getElementById('roleSelect').value = role;
+  document.querySelectorAll('.role-card').forEach(card => card.classList.remove('active'));
+  document.getElementById(`card-${role}`).classList.add('active');
+}
+window.addEventListener('DOMContentLoaded', () => selectRoleCard('student'));
+
+// Admin Dashboard Accordion Toggle
+function toggleAdminAccordion(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById(`icon-${id}`);
+  if (el) {
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+      if (icon) icon.innerText = '▲';
+    } else {
+      el.classList.add('hidden');
+      if (icon) icon.innerText = '▼';
+    }
+  }
+}
+
 function toggleUserFields() {
   const role = document.getElementById('newRole').value;
   const driverFields = document.getElementById('driverFields');
@@ -79,9 +102,7 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// ==========================================
-// AUDIO BEEP SOUND GENERATOR
-// ==========================================
+// Audio Beep Sound Generator
 function playBeepSound() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -318,7 +339,7 @@ async function searchStudentDetails() {
   resultBox.classList.remove('hidden');
   if (found) {
     resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-400 text-base mb-1">Student Found:</h3>
+      <h3 class="font-bold text-blue-400 text-sm mb-1">Student Found:</h3>
       <p><strong>Name:</strong> ${found.name || 'N/A'}</p>
       <p><strong>Student ID:</strong> ${found.studentId || 'N/A'}</p>
       <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
@@ -352,7 +373,7 @@ async function searchDriverDetails() {
   resultBox.classList.remove('hidden');
   if (found) {
     resultBox.innerHTML = `
-      <h3 class="font-bold text-blue-400 text-base mb-1">Driver Found:</h3>
+      <h3 class="font-bold text-blue-400 text-sm mb-1">Driver Found:</h3>
       <p><strong>Name:</strong> ${found.name || 'N/A'}</p>
       <p><strong>Driver ID:</strong> ${found.driverId || 'N/A'}</p>
       <p><strong>Username:</strong> ${found.username || 'N/A'}</p>
@@ -451,7 +472,6 @@ function clearEmergencyAlerts() {
   db.ref(`liveBus/emergencies`).remove().then(() => alert("Alerts dismissed."));
 }
 
-// Driver Trigger: Announce Bus Arrived at Selected Stop
 function sendBusArrivedAnnouncement() {
   if (!currentUserData || currentRole !== 'driver') return;
   if (!selectedCurrentStop || selectedCurrentStop === "None") {
@@ -472,7 +492,6 @@ function sendBusArrivedAnnouncement() {
   });
 }
 
-// Select Stop on Driver Panel Checklist
 function selectDriverStop(stopName) {
   selectedCurrentStop = stopName;
   const displayEl = document.getElementById('driverActiveStopDisplay');
@@ -522,7 +541,7 @@ function initAdminDashboard() {
 
     if (!buses) {
       if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
-      if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No active buses broadcasting.</td></tr>';
+      if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-slate-500">No active buses broadcasting.</td></tr>';
       Object.keys(adminBusMarkers).forEach(key => adminMap.removeLayer(adminBusMarkers[key]));
       adminBusMarkers = {};
       return;
@@ -538,11 +557,11 @@ function initAdminDashboard() {
         const speed = bus.speed ? (bus.speed * 3.6).toFixed(1) : "0.0";
         activeBusTableBody.innerHTML += `
           <tr class="border-b border-blue-500/10 hover:bg-slate-800/50">
-            <td class="p-3 font-bold text-blue-400">${bus.busNumber || 'N/A'}</td>
-            <td class="p-3 text-slate-300">${driverKey}</td>
-            <td class="p-3 text-slate-400">${bus.route || 'Route'}</td>
-            <td class="p-3 text-emerald-400 font-mono">${speed} km/h</td>
-            <td class="p-3"><button onclick="forceStopBus('${driverKey}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-xl text-xs font-bold uppercase">Force Stop</button></td>
+            <td class="p-2 font-bold text-blue-400">${bus.busNumber || 'N/A'}</td>
+            <td class="p-2 text-slate-300">${driverKey}</td>
+            <td class="p-2 text-slate-400">${bus.route || 'Route'}</td>
+            <td class="p-2 text-emerald-400 font-mono">${speed} km/h</td>
+            <td class="p-2"><button onclick="forceStopBus('${driverKey}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Force Stop</button></td>
           </tr>
         `;
       });
@@ -553,7 +572,7 @@ function initAdminDashboard() {
       const bus = buses[driverKey];
       if (bus && bus.lat && bus.lng) {
         bounds.push([bus.lat, bus.lng]);
-        const popupText = `<div class="text-sm"><h3 class="font-bold text-blue-400">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
+        const popupText = `<div class="text-xs"><h3 class="font-bold text-blue-400">Bus: ${bus.busNumber || 'N/A'}</h3><p>Route: ${bus.route}</p><p>Driver: ${bus.driverName}</p></div>`;
         if (!adminBusMarkers[driverKey]) {
           adminBusMarkers[driverKey] = L.marker([bus.lat, bus.lng]).addTo(adminMap).bindPopup(popupText);
         } else {
@@ -582,9 +601,8 @@ function fetchAndRenderData() {
   const dateFilter = document.getElementById('attendanceDateFilter');
   const selectedDate = dateFilter ? dateFilter.value : getTodayDateString();
 
-  const driverTableBody = document.getElementById('adminDriverAttendanceBody');
-  const studentTableBody = document.getElementById('adminStudentAttendanceBody');
   const routeCardsContainer = document.getElementById('routeCardsContainer');
+  const routeWiseAttendanceContainer = document.getElementById('routeWiseAttendanceContainer');
 
   db.ref('users').once('value', (userSnapshot) => {
     const usersData = userSnapshot.val() || {};
@@ -610,11 +628,54 @@ function fetchAndRenderData() {
         routesMap[routeName].students.push(stu);
       });
 
+      // Render Route-Wise Attendance Overview
+      if (routeWiseAttendanceContainer) {
+        routeWiseAttendanceContainer.innerHTML = '';
+        const routeNames = Object.keys(routesMap);
+
+        if (routeNames.length === 0) {
+          routeWiseAttendanceContainer.innerHTML = `<p class="text-slate-500 text-xs italic">No route records available.</p>`;
+        } else {
+          routeNames.forEach((routeName, index) => {
+            const group = routesMap[routeName];
+            const attBoxId = `att-route-box-${index}`;
+
+            let driversAttHTML = group.drivers.map(drv => {
+              const isPresent = driverAtt[drv.username] && driverAtt[drv.username].status === "Present";
+              return `<tr class="border-b border-slate-800"><td class="p-2 font-bold text-slate-200">${drv.name} <span class="text-[10px] text-yellow-400">(Driver)</span></td><td class="p-2 text-blue-400 font-mono">${drv.driverId || drv.username}</td><td class="p-2">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
+            }).join('');
+
+            let studentsAttHTML = group.students.map(stu => {
+              const isPresent = studentAtt[stu.username] && studentAtt[stu.username].status === "Present";
+              const isAbsent = studentAtt[stu.username] && studentAtt[stu.username].status === "Absent";
+              const statusBadge = isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : isAbsent ? '<span class="text-red-400 font-bold">Absent ❌</span>' : '<span class="text-slate-500">Not Marked ⏳</span>';
+              return `<tr class="border-b border-slate-800"><td class="p-2 text-slate-300">${stu.name}</td><td class="p-2 text-blue-400 font-mono">${stu.studentId || 'N/A'}</td><td class="p-2">${statusBadge}</td></tr>`;
+            }).join('');
+
+            routeWiseAttendanceContainer.innerHTML += `
+              <div class="bg-[#111827] border border-blue-500/30 rounded-xl overflow-hidden shadow">
+                <div onclick="toggleRouteBox('${attBoxId}')" class="p-3 bg-slate-900/80 hover:bg-slate-800 cursor-pointer flex justify-between items-center border-b border-slate-800">
+                  <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><h3 class="font-extrabold text-blue-400 text-xs uppercase">${routeName}</h3></div>
+                  <span id="icon-${attBoxId}" class="text-blue-400 font-bold text-xs">▼</span>
+                </div>
+                <div id="${attBoxId}" class="p-3 hidden bg-[#0a0f1d] overflow-x-auto">
+                  <table class="w-full text-left text-xs font-mono">
+                    <thead><tr class="bg-slate-900 text-slate-400"><th class="p-2">Name</th><th class="p-2">ID</th><th class="p-2">Status (${selectedDate})</th></tr></thead>
+                    <tbody>${driversAttHTML}${studentsAttHTML}</tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          });
+        }
+      }
+
+      // Render Registered Routes Cards
       if (routeCardsContainer) {
         routeCardsContainer.innerHTML = '';
         const routeNames = Object.keys(routesMap);
         if (routeNames.length === 0) {
-          routeCardsContainer.innerHTML = `<p class="text-slate-500 text-sm">No routes found.</p>`;
+          routeCardsContainer.innerHTML = `<p class="text-slate-500 text-xs">No registered routes.</p>`;
         } else {
           routeNames.forEach((routeName, index) => {
             const group = routesMap[routeName];
@@ -622,9 +683,9 @@ function fetchAndRenderData() {
             const totalCount = group.drivers.length + group.students.length;
 
             let driversHTML = group.drivers.length > 0 ? group.drivers.map(drv => `
-              <div class="bg-blue-950/40 border border-blue-500/30 p-3 rounded-xl mb-2 flex justify-between items-center text-xs">
-                <div><span class="bg-blue-500 text-black font-extrabold px-2 py-0.5 rounded text-[10px] mr-2">DRIVER</span><strong>${drv.name}</strong></div>
-                <div class="space-x-3"><span>Phone: <b class="text-blue-400">${drv.phone || 'N/A'}</b></span><span>Bus: <b class="text-blue-400">${drv.busNumber || 'N/A'}</b></span><button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">Delete</button></div>
+              <div class="bg-blue-950/40 border border-blue-500/30 p-2.5 rounded-xl mb-2 flex justify-between items-center text-xs">
+                <div><span class="bg-blue-500 text-black font-extrabold px-1.5 py-0.5 rounded text-[10px] mr-2">DRIVER</span><strong>${drv.name}</strong></div>
+                <div class="space-x-2"><span>Bus: <b class="text-blue-400">${drv.busNumber || 'N/A'}</b></span><button onclick="deleteUser('driver', '${drv.username}')" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Delete</button></div>
               </div>
             `).join('') : `<p class="text-amber-400 text-xs italic mb-2">⚠️ No Driver assigned.</p>`;
 
@@ -636,47 +697,32 @@ function fetchAndRenderData() {
             ` : `<p class="text-slate-500 text-xs italic">No students registered.</p>`;
 
             routeCardsContainer.innerHTML += `
-              <div class="bg-[#111827] border border-blue-500/30 rounded-2xl overflow-hidden shadow-lg">
-                <div onclick="toggleRouteBox('${boxId}')" class="p-4 bg-slate-900/80 hover:bg-slate-800 cursor-pointer flex justify-between items-center border-b border-slate-800">
-                  <div class="flex items-center gap-3"><span class="w-3 h-3 rounded-full bg-blue-500"></span><h3 class="font-extrabold text-blue-400 text-sm uppercase">${routeName}</h3><span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">${totalCount} Members</span></div>
+              <div class="bg-[#111827] border border-blue-500/30 rounded-xl overflow-hidden shadow-lg">
+                <div onclick="toggleRouteBox('${boxId}')" class="p-3 bg-slate-900/80 hover:bg-slate-800 cursor-pointer flex justify-between items-center border-b border-slate-800">
+                  <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><h3 class="font-extrabold text-blue-400 text-xs uppercase">${routeName}</h3><span class="bg-blue-500/10 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full">${totalCount} Members</span></div>
                   <span id="icon-${boxId}" class="text-blue-400 font-bold text-xs">▼</span>
                 </div>
-                <div id="${boxId}" class="p-4 hidden space-y-4 bg-[#0a0f1d]">
-                  <div><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Assigned Driver Info</h4>${driversHTML}</div>
-                  <div><h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Assigned Students List (${group.students.length})</h4>${studentsHTML}</div>
+                <div id="${boxId}" class="p-3 hidden space-y-3 bg-[#0a0f1d]">
+                  <div><h4 class="text-[11px] font-bold uppercase text-slate-400 mb-1">Assigned Driver</h4>${driversHTML}</div>
+                  <div><h4 class="text-[11px] font-bold uppercase text-slate-400 mb-1">Students List (${group.students.length})</h4>${studentsHTML}</div>
                 </div>
               </div>
             `;
           });
         }
       }
-
-      if (driverTableBody) {
-        driverTableBody.innerHTML = Object.keys(drivers).map(username => {
-          const user = drivers[username];
-          const isPresent = driverAtt[username] && driverAtt[username].status === "Present";
-          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5 text-blue-400 font-bold">${user.driverId || username}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
-        }).join('') || '<tr><td colspan="3" class="p-3 text-center text-slate-500">No drivers</td></tr>';
-      }
-
-      if (studentTableBody) {
-        studentTableBody.innerHTML = Object.keys(students).map(username => {
-          const user = students[username];
-          const isPresent = studentAtt[username] && studentAtt[username].status === "Present";
-          return `<tr class="border-b border-blue-500/10"><td class="p-2.5">${user.name}</td><td class="p-2.5 text-studentId || 'N/A'">${user.studentId || 'N/A'}</td><td class="p-2.5">${user.course || 'N/A'}</td><td class="p-2.5">${isPresent ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : '<span class="text-red-400 font-bold">Absent ❌</span>'}</td></tr>`;
-        }).join('') || '<tr><td colspan="4" class="p-3 text-center text-slate-500">No students</td></tr>';
-      }
     });
   });
 }
 
-function sendWarning(event) {
-  if (event) event.preventDefault();
+function sendWarning() {
   const msg = document.getElementById('warningMessage').value.trim();
   if (!msg) return;
-  db.ref('liveBus/warning').set(msg).then(() => { alert("Warning broadcasted!"); document.getElementById('warningForm').reset(); });
+  db.ref('liveBus/warning').set(msg).then(() => { alert("Warning broadcasted!"); document.getElementById('warningMessage').value = ''; });
 }
+
 function clearWarning() { db.ref('liveBus/warning').remove(); }
+
 function listenForWarnings() {
   db.ref('liveBus/warning').on('value', (snapshot) => {
     const warningMsg = snapshot.val();
@@ -708,7 +754,7 @@ function initDriverDashboard(userData) {
       stopsListEl.innerHTML = lines.map(line => `
         <div onclick="selectDriverStop('${line.replace(/'/g, "\\'")}')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl cursor-pointer flex justify-between items-center transition">
           <span class="text-slate-200 font-semibold">${line}</span>
-          <span class="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">Select 📍</span>
+          <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Select 📍</span>
         </div>
       `).join('');
     } else if (stopsListEl) {
@@ -815,7 +861,7 @@ function initStudentDashboard(userData) {
   const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
   const studentPickup = (userData && userData.pickupStop) ? userData.pickupStop.trim().toLowerCase() : "";
 
-  // Listen for Stop Arrival Announcement with Stop Name from Driver ("Please get ready" removed)
+  // Listen for Stop Arrival Announcement
   db.ref(`liveBus/stopArrivals`).on('value', (snapshot) => {
     const arrivals = snapshot.val() || {};
     const arrivalBanner = document.getElementById('busArrivedStopBanner');
