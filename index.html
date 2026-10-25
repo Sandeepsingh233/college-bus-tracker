@@ -38,7 +38,7 @@
                     <p id="typewriterText" class="seq-hidden text-xs text-slate-300 max-w-sm font-mono leading-relaxed min-h-[40px] pt-1"></p>
                 </div>
 
-                <!-- BATMAN HEROIC ARTISTIC CARD (Replaces Empty Space) -->
+                <!-- BATMAN HEROIC ARTISTIC CARD -->
                 <div id="seq-hero-card" class="seq-hidden batman-hero-card w-full md:w-72 h-44 rounded-2xl p-4 flex flex-col justify-end relative overflow-hidden border border-yellow-500/40 shadow-inner">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent z-10"></div>
                     <div class="absolute top-3 right-3 z-20 text-3xl animate-pulse">🦇</div>
@@ -102,7 +102,7 @@
     </div>
 
     <!-- ==================== ADMIN DASHBOARD ==================== -->
-    <div id="adminDashboard" style="display: none;" class="admin-theme min-h-screen flex flex-col">
+    <div id="adminDashboard" style="display: none;" class="admin-theme cyber-theme min-h-screen flex flex-col">
         <header class="bg-[#0f172a] border-b border-cyan-500/20 p-4 flex flex-wrap justify-between items-center px-6 shadow-xl z-20 gap-3">
             <div class="flex items-center gap-3">
                 <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_12px_#22d3ee] animate-pulse"></span>
@@ -114,7 +114,7 @@
                 <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl text-xs">
                     <span class="text-slate-400 font-bold">Theme:</span>
                     <select id="adminThemeSelector" onchange="changeAdminTheme(this.value)" class="bg-transparent text-cyan-400 font-black outline-none cursor-pointer">
-                        <option value="cyberpunk" class="bg-slate-900">Cyber Blue</option>
+                        <option value="cyber" class="bg-slate-900">Cyber Blue</option>
                         <option value="matrix" class="bg-slate-900">Matrix Green</option>
                         <option value="batman" class="bg-slate-900">Dark Knight</option>
                     </select>
@@ -124,7 +124,7 @@
             </div>
         </header>
 
-        <!-- LIVE STATISTICS SUMMARY CARDS (Top Overview Widgets) -->
+        <!-- LIVE STATISTICS SUMMARY CARDS -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 pb-2 bg-[#070b14]">
             <div class="admin-card p-4 rounded-2xl border-l-4 border-cyan-400">
                 <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Active Buses Live</span>
@@ -302,7 +302,7 @@
 
             </div>
 
-            <!-- RIGHT PANEL MAP (WITH FULLSCREEN TOGGLE) -->
+            <!-- RIGHT PANEL MAP -->
             <div id="adminMapContainer" class="w-full md:w-1/2 h-full relative bg-[#070b14] transition-all duration-300">
                 <div class="absolute top-4 right-4 z-[500] flex items-center gap-2">
                     <button onclick="toggleFullscreenMap()" id="fullscreenMapBtn" class="bg-slate-900/90 border border-cyan-500/30 text-cyan-400 font-bold text-xs px-3 py-1.5 rounded-full shadow-lg backdrop-blur hover:bg-slate-800 transition">⛶ Fullscreen Map</button>
