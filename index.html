@@ -12,237 +12,249 @@
 </head>
 <body class="font-sans min-h-screen antialiased bg-[#0a0f1d] text-slate-100">
 
-    <!-- ==================== LOGIN SECTION ==================== -->
+    <!-- ==================== LOGIN SECTION (With Visual Role Cards) ==================== -->
     <div id="loginSection" class="min-h-screen flex items-center justify-center p-4 bg-[#0a0f1d]">
-        <div class="bg-[#111827] border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-black text-center mb-6 text-blue-500 tracking-wider uppercase">College Bus Portal</h2>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Select Role</label>
-                    <select id="roleSelect" class="w-full bg-[#0a0f1d] border border-slate-700 text-slate-200 rounded-xl p-3 outline-none focus:border-blue-500">
-                        <option value="student">Student</option>
-                        <option value="driver">Driver</option>
-                        <option value="admin">Admin</option>
-                    </select>
+        <div class="bg-[#111827] border border-slate-800 p-8 rounded-3xl w-full max-w-4xl shadow-2xl space-y-8">
+            <div class="text-center space-y-2">
+                <h1 class="text-3xl font-black text-blue-500 tracking-wider uppercase">College Bus Live Portal</h1>
+                <p class="text-xs text-slate-400">Select your account role to log in to the live location and attendance platform</p>
+            </div>
+
+            <!-- Visual Role Selection Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Student Card -->
+                <div id="card-student" onclick="selectRoleCard('student')" class="role-card border-2 border-slate-800 bg-[#0a0f1d] p-5 rounded-2xl cursor-pointer hover:border-blue-500/50 transition flex flex-col items-center text-center space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-3xl">
+                        🎓
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-100 text-sm">Student Portal</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Track assigned bus, check ETA & attendance</p>
+                    </div>
                 </div>
+
+                <!-- Driver Card -->
+                <div id="card-driver" onclick="selectRoleCard('driver')" class="role-card border-2 border-slate-800 bg-[#0a0f1d] p-5 rounded-2xl cursor-pointer hover:border-yellow-500/50 transition flex flex-col items-center text-center space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-3xl">
+                        🚌
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-100 text-sm">Driver Portal</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Broadcast live GPS & mark student attendance</p>
+                    </div>
+                </div>
+
+                <!-- Admin Card -->
+                <div id="card-admin" onclick="selectRoleCard('admin')" class="role-card border-2 border-slate-800 bg-[#0a0f1d] p-5 rounded-2xl cursor-pointer hover:border-emerald-500/50 transition flex flex-col items-center text-center space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl">
+                        ⚙️
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-100 text-sm">Admin Control</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Manage fleet, user accounts & daily reports</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleLogin(event)" class="space-y-4 max-w-md mx-auto pt-4 border-t border-slate-800">
+                <input type="hidden" id="roleSelect" value="student">
+                
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Username / ID</label>
-                    <input type="text" id="usernameInput" required class="w-full bg-[#0a0f1d] border border-slate-700 text-slate-200 rounded-xl p-3 outline-none focus:border-blue-500" placeholder="Enter username">
+                    <input type="text" id="usernameInput" required class="w-full bg-[#0a0f1d] border border-slate-700 text-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500" placeholder="Enter your username">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Password</label>
-                    <input type="password" id="passwordInput" required class="w-full bg-[#0a0f1d] border border-slate-700 text-slate-200 rounded-xl p-3 outline-none focus:border-blue-500" placeholder="••••••••">
+                    <input type="password" id="passwordInput" required class="w-full bg-[#0a0f1d] border border-slate-700 text-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500" placeholder="••••••••">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl uppercase tracking-wider transition shadow-lg shadow-blue-600/30">Sign In</button>
             </form>
         </div>
     </div>
 
-    <!-- ==================== ADMIN DASHBOARD ==================== -->
-    <div id="adminDashboard" style="display: none;" class="admin-theme min-h-screen p-6">
-        <div class="max-w-6xl mx-auto space-y-6">
-            <div class="admin-card p-6 rounded-2xl flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-black text-blue-400 uppercase tracking-wider">Admin Control Panel</h1>
-                    <p class="text-xs text-slate-400 mt-1">Fleet monitoring, emergency control, user management & attendance</p>
-                </div>
-                <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 text-white font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider shadow">Logout</button>
+    <!-- ==================== ADMIN DASHBOARD (Split Layout) ==================== -->
+    <div id="adminDashboard" style="display: none;" class="admin-theme min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-[#0f172a] border-b border-blue-500/20 p-4 flex justify-between items-center px-6">
+            <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
+                <h1 class="text-xl font-black text-blue-400 uppercase tracking-wider">Admin Control Panel</h1>
             </div>
+            <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 text-white font-black px-4 py-1.5 rounded-xl text-xs uppercase tracking-wider shadow">Logout</button>
+        </header>
 
-            <!-- Emergency Alerts Section -->
-            <div id="adminEmergencyContainer" class="hidden bg-red-950/80 border-2 border-red-500 text-white p-4 rounded-2xl shadow-2xl animate-pulse">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-black text-red-400 flex items-center gap-2 uppercase tracking-wide">🚨 EMERGENCY ALERT RECEIVED!</h2>
-                    <button onclick="clearEmergencyAlerts()" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-600">Dismiss</button>
-                </div>
-                <div id="adminEmergencyList" class="mt-2 text-sm space-y-1 font-mono text-red-200"></div>
-            </div>
-
-            <!-- Search User Section -->
-            <div class="admin-card p-6 rounded-2xl space-y-4">
-                <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider border-b border-blue-500/20 pb-2">Search User Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex gap-2">
-                        <input type="text" id="searchStudentIdInput" placeholder="Enter Student ID (e.g. STU01)" class="admin-input rounded-xl p-3 text-sm w-full outline-none">
-                        <button onclick="searchStudentDetails()" class="admin-btn-blue px-5 py-2 rounded-xl text-xs uppercase font-black">Search</button>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="searchDriverIdInput" placeholder="Enter Driver ID" class="admin-input rounded-xl p-3 text-sm w-full outline-none">
-                        <button onclick="searchDriverDetails()" class="admin-btn-blue px-5 py-2 rounded-xl text-xs uppercase font-black">Search</button>
-                    </div>
-                </div>
-                <div id="searchResultBox" class="admin-card p-4 rounded-xl text-sm font-mono text-slate-300 hidden border border-blue-500/40"></div>
-            </div>
-
-            <!-- Live All Buses Map Section -->
-            <div class="admin-card p-6 rounded-2xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider">Live Multi-Bus Fleet Overview</h2>
-                    <span id="activeBusesCount" class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase">0 Active Buses</span>
-                </div>
-                <div id="adminMap" class="w-full h-96 rounded-xl border border-blue-500/30 shadow-inner z-0"></div>
-            </div>
-
-            <!-- Active Fleet Force Stop Section -->
-            <div class="admin-card p-6 rounded-2xl border-l-4 border-red-500">
-                <h2 class="text-lg font-bold text-red-400 uppercase tracking-wider mb-3">Active Fleet Control (Force Stop Buses)</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm font-mono">
-                        <thead>
-                            <tr class="bg-slate-900 text-blue-400 border-b border-blue-500/30">
-                                <th class="p-3">Bus Number</th>
-                                <th class="p-3">Driver Username</th>
-                                <th class="p-3">Route</th>
-                                <th class="p-3">Speed</th>
-                                <th class="p-3">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminActiveBusesTableBody">
-                            <tr><td colspan="5" class="p-4 text-center text-slate-500">No active buses broadcasting.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Attendance Monitoring Section -->
-            <div class="admin-card p-6 rounded-2xl space-y-4">
-                <div class="flex flex-col md:flex-row justify-between items-center border-b border-blue-500/20 pb-3 gap-2">
-                    <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider">Daily Attendance Overview</h2>
-                    <div>
-                        <label class="text-xs font-bold uppercase text-slate-400 mr-2">Select Date:</label>
-                        <input type="date" id="attendanceDateFilter" class="admin-input rounded-xl p-2 text-sm outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="admin-card p-4 rounded-xl">
-                        <h3 class="font-bold text-blue-400 mb-3 text-sm uppercase tracking-wider">Driver Attendance List</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm font-mono">
-                                <thead>
-                                    <tr class="bg-slate-900 text-blue-300 border-b border-blue-500/30">
-                                        <th class="p-2.5">Name</th>
-                                        <th class="p-2.5">ID / Bus No</th>
-                                        <th class="p-2.5">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminDriverAttendanceBody">
-                                    <tr><td colspan="3" class="p-3 text-center text-slate-500">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="admin-card p-4 rounded-xl">
-                        <h3 class="font-bold text-blue-400 mb-3 text-sm uppercase tracking-wider">Student Attendance List</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm font-mono">
-                                <thead>
-                                    <tr class="bg-slate-900 text-blue-300 border-b border-blue-500/30">
-                                        <th class="p-2.5">Name</th>
-                                        <th class="p-2.5">Student ID</th>
-                                        <th class="p-2.5">Course</th>
-                                        <th class="p-2.5">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminStudentAttendanceBody">
-                                    <tr><td colspan="4" class="p-3 text-center text-slate-500">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Send Warning Form -->
-            <form id="warningForm" onsubmit="sendWarning(event)" class="admin-card p-6 rounded-2xl border-l-4 border-amber-500 space-y-4">
-                <h2 class="text-lg font-bold text-amber-400 uppercase tracking-wider">Send Broadcast Warning / Notice</h2>
-                <div>
-                    <textarea id="warningMessage" required rows="2" class="admin-input w-full rounded-xl p-3 text-sm outline-none" placeholder="Type emergency warning..."></textarea>
-                </div>
-                <div class="flex gap-4">
-                    <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-black font-black px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition">Broadcast Warning</button>
-                    <button type="button" onclick="clearWarning()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider transition">Clear Warning</button>
-                </div>
-            </form>
+        <!-- Main Workspace: Split View -->
+        <div class="flex-grow flex flex-col md:flex-row h-[calc(100vh-65px)] overflow-hidden">
             
-            <!-- Add User Form -->
-            <form id="addUserForm" onsubmit="addNewUser(event)" class="admin-card p-6 rounded-2xl space-y-4">
-                <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider border-b border-blue-500/20 pb-2">Create New Driver / Student Account</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Account Type</label>
-                        <select id="newRole" onchange="toggleUserFields()" class="admin-input w-full rounded-xl p-3 outline-none">
-                            <option value="driver" class="bg-slate-900">Driver</option>
-                            <option value="student" class="bg-slate-900">Student</option>
-                        </select>
+            <!-- LEFT PANEL: Dynamic Control Sections -->
+            <div class="w-full md:w-1/2 p-6 overflow-y-auto space-y-6 bg-[#090d16] border-r border-blue-500/20">
+                
+                <!-- Emergency Alert Container -->
+                <div id="adminEmergencyContainer" class="hidden bg-red-950/80 border-2 border-red-500 text-white p-4 rounded-2xl shadow-2xl animate-pulse">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-base font-black text-red-400 uppercase tracking-wide">🚨 EMERGENCY ALERT RECEIVED!</h2>
+                        <button onclick="clearEmergencyAlerts()" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Dismiss</button>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Full Name</label>
-                        <input type="text" id="newName" required class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. Rahul Kumar">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Login Username</label>
-                        <input type="text" id="newUsername" required class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. driver_01">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Password</label>
-                        <input type="password" id="newPassword" required class="admin-input w-full rounded-xl p-3 outline-none" placeholder="Set password">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Assigned Route</label>
-                        <input type="text" id="newRoute" required class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. Route 12 - Campus to City">
-                    </div>
+                    <div id="adminEmergencyList" class="mt-2 text-xs space-y-1 font-mono text-red-200"></div>
+                </div>
 
-                    <!-- Driver Fields -->
-                    <div id="driverFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Driver ID</label>
-                            <input type="text" id="newDriverId" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. DRV-01">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Phone Number</label>
-                            <input type="tel" id="newPhone" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. +91 9876543210">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Bus Number</label>
-                            <input type="text" id="newBusNumber" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. BUS-102">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Registration Number</label>
-                            <input type="text" id="newRegNumber" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. DL-01-AB-1234">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Route Timetable / Stops Schedule (Simple Names)</label>
-                            <textarea id="newSchedule" rows="3" onkeydown="handleScheduleKeydown(event)" class="admin-input w-full rounded-xl p-3 text-xs outline-none" placeholder="07:30 AM - Main Gate&#10;07:50 AM - City Center&#10;08:20 AM - College Block"></textarea>
-                        </div>
+                <!-- Accordion Section 1: User Search -->
+                <div class="admin-card rounded-2xl overflow-hidden">
+                    <div onclick="toggleAdminAccordion('acc-search')" class="p-4 bg-slate-900/80 cursor-pointer flex justify-between items-center border-b border-blue-500/20">
+                        <h2 class="text-xs font-extrabold text-blue-400 uppercase tracking-wider">🔍 Search User Details</h2>
+                        <span id="icon-acc-search" class="text-blue-400 text-xs font-bold">▼</span>
                     </div>
+                    <div id="acc-search" class="p-4 space-y-4 bg-[#0a0f1d]">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="flex gap-2">
+                                <input type="text" id="searchStudentIdInput" placeholder="Student ID" class="admin-input rounded-xl p-2.5 text-xs w-full outline-none">
+                                <button onclick="searchStudentDetails()" class="admin-btn-blue px-3 py-1.5 rounded-xl text-xs font-black uppercase">Search</button>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="searchDriverIdInput" placeholder="Driver ID" class="admin-input rounded-xl p-2.5 text-xs w-full outline-none">
+                                <button onclick="searchDriverDetails()" class="admin-btn-blue px-3 py-1.5 rounded-xl text-xs font-black uppercase">Search</button>
+                            </div>
+                        </div>
+                        <div id="searchResultBox" class="p-3 rounded-xl text-xs font-mono text-slate-300 hidden border border-blue-500/40 bg-slate-900"></div>
+                    </div>
+                </div>
 
-                    <!-- Student Fields -->
-                    <div id="studentFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4" style="display: none;">
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Student ID</label>
-                            <input type="text" id="newStudentId" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. STU-2026-001">
+                <!-- Accordion Section 2: Active Fleet Control -->
+                <div class="admin-card rounded-2xl overflow-hidden border-l-4 border-red-500">
+                    <div onclick="toggleAdminAccordion('acc-fleet')" class="p-4 bg-slate-900/80 cursor-pointer flex justify-between items-center border-b border-blue-500/20">
+                        <h2 class="text-xs font-extrabold text-red-400 uppercase tracking-wider">🚌 Active Fleet Force Stop</h2>
+                        <span id="icon-acc-fleet" class="text-red-400 text-xs font-bold">▼</span>
+                    </div>
+                    <div id="acc-fleet" class="p-4 bg-[#0a0f1d] overflow-x-auto">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead>
+                                <tr class="bg-slate-900 text-blue-400 border-b border-blue-500/30">
+                                    <th class="p-2">Bus No</th>
+                                    <th class="p-2">Driver</th>
+                                    <th class="p-2">Route</th>
+                                    <th class="p-2">Speed</th>
+                                    <th class="p-2">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminActiveBusesTableBody">
+                                <tr><td colspan="5" class="p-3 text-center text-slate-500">No active buses broadcasting.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Accordion Section 3: Route-Wise Attendance Overview -->
+                <div class="admin-card rounded-2xl overflow-hidden">
+                    <div onclick="toggleAdminAccordion('acc-attendance')" class="p-4 bg-slate-900/80 cursor-pointer flex justify-between items-center border-b border-blue-500/20">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-xs font-extrabold text-blue-400 uppercase tracking-wider">📊 Route-Wise Attendance Overview</h2>
+                            <input type="date" id="attendanceDateFilter" onclick="event.stopPropagation()" class="admin-input rounded-lg p-1 text-[11px] outline-none">
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Course</label>
-                            <input type="text" id="newCourse" class="admin-input w-full rounded-xl p-3 outline-none" placeholder="e.g. B.Tech CS">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-blue-400 mb-1">Boarding / Pickup Stop 📍</label>
-                            <input type="text" id="newPickupStop" class="admin-input w-full rounded-xl p-3 outline-none border-blue-500" placeholder="e.g. City Center">
+                        <span id="icon-acc-attendance" class="text-blue-400 text-xs font-bold">▲</span>
+                    </div>
+                    <div id="acc-attendance" class="p-4 bg-[#0a0f1d] space-y-4">
+                        <div id="routeWiseAttendanceContainer" class="space-y-4">
+                            <p class="text-slate-500 text-xs italic">Loading route attendance...</p>
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="admin-btn-blue w-full font-black py-3 rounded-xl uppercase tracking-wider">Create Account</button>
-            </form>
 
-            <div class="admin-card p-6 rounded-2xl space-y-4">
-                <h2 class="text-lg font-bold text-blue-400 uppercase tracking-wider">Registered Routes & Assigned Fleet Info</h2>
-                <div id="routeCardsContainer" class="space-y-4">
-                    <p class="text-slate-500 text-sm">Loading routes...</p>
+                <!-- Accordion Section 4: Create User Account -->
+                <div class="admin-card rounded-2xl overflow-hidden">
+                    <div onclick="toggleAdminAccordion('acc-adduser')" class="p-4 bg-slate-900/80 cursor-pointer flex justify-between items-center border-b border-blue-500/20">
+                        <h2 class="text-xs font-extrabold text-blue-400 uppercase tracking-wider">➕ Add Driver / Student Account</h2>
+                        <span id="icon-acc-adduser" class="text-blue-400 text-xs font-bold">▼</span>
+                    </div>
+                    <div id="acc-adduser" class="p-4 hidden bg-[#0a0f1d]">
+                        <form id="addUserForm" onsubmit="addNewUser(event)" class="space-y-3 text-xs">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-bold text-slate-400 mb-1">Account Type</label>
+                                    <select id="newRole" onchange="toggleUserFields()" class="admin-input w-full rounded-xl p-2.5 outline-none">
+                                        <option value="driver" class="bg-slate-900">Driver</option>
+                                        <option value="student" class="bg-slate-900">Student</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-400 mb-1">Full Name</label>
+                                    <input type="text" id="newName" required class="admin-input w-full rounded-xl p-2.5 outline-none" placeholder="Full Name">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-400 mb-1">Username</label>
+                                    <input type="text" id="newUsername" required class="admin-input w-full rounded-xl p-2.5 outline-none" placeholder="Username">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-400 mb-1">Password</label>
+                                    <input type="password" id="newPassword" required class="admin-input w-full rounded-xl p-2.5 outline-none" placeholder="Password">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block font-bold text-slate-400 mb-1">Assigned Route</label>
+                                    <input type="text" id="newRoute" required class="admin-input w-full rounded-xl p-2.5 outline-none" placeholder="e.g. Route 12">
+                                </div>
+
+                                <!-- Driver Fields -->
+                                <div id="driverFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <input type="text" id="newDriverId" class="admin-input rounded-xl p-2.5 outline-none" placeholder="Driver ID">
+                                    <input type="tel" id="newPhone" class="admin-input rounded-xl p-2.5 outline-none" placeholder="Phone Number">
+                                    <input type="text" id="newBusNumber" class="admin-input rounded-xl p-2.5 outline-none" placeholder="Bus Number">
+                                    <input type="text" id="newRegNumber" class="admin-input rounded-xl p-2.5 outline-none" placeholder="Reg. Number">
+                                    <div class="md:col-span-2">
+                                        <label class="block font-bold text-slate-400 mb-1">Stops Schedule (One per line)</label>
+                                        <textarea id="newSchedule" rows="2" onkeydown="handleScheduleKeydown(event)" class="admin-input w-full rounded-xl p-2 text-xs outline-none" placeholder="07:30 AM - Main Gate&#10;07:50 AM - City Center"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Student Fields -->
+                                <div id="studentFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-3" style="display: none;">
+                                    <input type="text" id="newStudentId" class="admin-input rounded-xl p-2.5 outline-none" placeholder="Student ID">
+                                    <input type="text" id="newCourse" class="admin-input rounded-xl p-2.5 outline-none" placeholder="Course">
+                                    <input type="text" id="newPickupStop" class="admin-input rounded-xl p-2.5 outline-none border-blue-500" placeholder="Pickup Stop">
+                                </div>
+                            </div>
+                            <button type="submit" class="admin-btn-blue w-full font-black py-2.5 rounded-xl uppercase tracking-wider mt-2">Create Account</button>
+                        </form>
+                    </div>
                 </div>
+
+                <!-- Accordion Section 5: Broadcast Warning -->
+                <div class="admin-card rounded-2xl overflow-hidden border-l-4 border-amber-500">
+                    <div onclick="toggleAdminAccordion('acc-warning')" class="p-4 bg-slate-900/80 cursor-pointer flex justify-between items-center border-b border-blue-500/20">
+                        <h2 class="text-xs font-extrabold text-amber-400 uppercase tracking-wider">📢 Send Warning Notice</h2>
+                        <span id="icon-acc-warning" class="text-amber-400 text-xs font-bold">▼</span>
+                    </div>
+                    <div id="acc-warning" class="p-4 hidden bg-[#0a0f1d] space-y-3">
+                        <textarea id="warningMessage" rows="2" class="admin-input w-full rounded-xl p-2.5 text-xs outline-none" placeholder="Type notice..."></textarea>
+                        <div class="flex gap-2">
+                            <button onclick="sendWarning()" class="bg-amber-600 text-black font-black px-4 py-2 rounded-xl text-xs uppercase">Broadcast Notice</button>
+                            <button onclick="clearWarning()" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl text-xs uppercase">Clear Notice</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion Section 6: Registered Fleet Info -->
+                <div class="admin-card rounded-2xl overflow-hidden">
+                    <div onclick="toggleAdminAccordion('acc-routes')" class="p-4 bg-slate-900/80 cursor-pointer flex justify-between items-center border-b border-blue-500/20">
+                        <h2 class="text-xs font-extrabold text-blue-400 uppercase tracking-wider">📋 Registered Routes & Accounts</h2>
+                        <span id="icon-acc-routes" class="text-blue-400 text-xs font-bold">▼</span>
+                    </div>
+                    <div id="acc-routes" class="p-4 hidden bg-[#0a0f1d] space-y-3">
+                        <div id="routeCardsContainer" class="space-y-3">
+                            <p class="text-slate-500 text-xs">Loading routes...</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
+            <!-- RIGHT PANEL: Full Height Fixed Map Overview -->
+            <div class="w-full md:w-1/2 h-full relative bg-[#0a0f1d]">
+                <div class="absolute top-4 right-4 z-[500] bg-slate-900/90 border border-blue-500/30 text-blue-400 font-mono text-xs px-3 py-1.5 rounded-full shadow-lg">
+                    <span id="activeBusesCount">0 Active Buses</span>
+                </div>
+                <div id="adminMap" class="w-full h-full z-0"></div>
+            </div>
+
         </div>
     </div>
 
@@ -259,7 +271,7 @@
                     <span class="bg-zinc-800 text-yellow-400 font-bold text-xs px-3 py-1 rounded-full uppercase">ROUTE SELECTOR</span>
                 </div>
 
-                <!-- Driver Clickable Next Stop Controller Box -->
+                <!-- Driver Clickable Current Stop Box -->
                 <div class="bg-zinc-900 border border-blue-500/40 p-4 rounded-2xl space-y-2">
                     <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">📍 Set Current Stop (Click stop below to select)</span>
                     <h3 id="driverActiveStopDisplay" class="text-sm font-black text-amber-400">No stop selected</h3>
@@ -345,7 +357,7 @@
             🚨 <span id="studentWarningText"></span>
         </div>
 
-        <!-- Bus Arrived at Stop Banner ("Please get ready" removed) -->
+        <!-- Bus Arrived at Stop Banner -->
         <div id="busArrivedStopBanner" class="hidden bg-amber-500 text-black px-4 py-3 flex justify-between items-center text-xs font-black uppercase tracking-wider shadow-2xl animate-pulse">
             <span>🚨 BUS ARRIVED AT STOP: <strong id="arrivedStopNameText" class="underline"></strong>!</span>
             <button onclick="dismissStopArrivalAlert()" class="bg-black text-white px-3 py-1 rounded-lg text-[10px] font-bold">✕ Dismiss</button>
