@@ -306,84 +306,121 @@
         </div>
     </div>
 
-    <!-- ==================== DRIVER DASHBOARD ==================== -->
-    <div id="driverDashboard" style="display: none;" class="uber-theme min-h-screen p-6 flex justify-center items-start">
-        <div class="max-w-2xl w-full space-y-6">
-            <div class="uber-card p-6 rounded-3xl space-y-4">
-                <div id="driverWarningBanner" class="hidden bg-red-950 border-l-4 border-red-500 text-red-200 p-3 rounded-xl text-xs font-mono">
-                    ⚠️ <span id="driverWarningText"></span>
-                </div>
-                
-                <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                    <h1 class="text-2xl font-black tracking-tight text-white uppercase">Driver Portal</h1>
-                    <span class="bg-zinc-800 text-yellow-400 font-bold text-xs px-3 py-1 rounded-full uppercase">ROUTE SELECTOR</span>
-                </div>
+    <!-- ==================== INDIAN SUPERHERO DRIVER DASHBOARD ==================== -->
+    <div id="driverDashboard" style="display: none;" class="indian-hero-theme min-h-screen p-4 md:p-6 flex justify-center items-start bg-[#050811] text-amber-50 relative overflow-hidden">
+        
+        <!-- Superhero Ambient Glows -->
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-1/2 -right-32 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
-                <div class="bg-zinc-900 border border-cyan-500/40 p-4 rounded-2xl space-y-2">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">📍 Set Current Stop (Click stop below to select)</span>
-                    <h3 id="driverActiveStopDisplay" class="text-sm font-black text-amber-400">No stop selected</h3>
-                </div>
+        <div class="max-w-3xl w-full space-y-6 relative z-10">
+            
+            <div id="driverWarningBanner" class="hidden bg-red-950 border-l-4 border-red-500 text-red-200 p-3 rounded-2xl text-xs font-mono shadow-lg">
+                ⚠️ <span id="driverWarningText"></span>
+            </div>
 
-                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-wrap justify-between items-center gap-2">
-                    <div>
-                        <h3 class="font-bold text-white text-xs uppercase tracking-wider">My Daily Attendance</h3>
-                        <p id="driverSelfAttendanceStatusText" class="text-xs text-slate-400 font-mono mt-0.5">Checking status...</p>
+            <!-- HEADER CARD -->
+            <div class="hero-card p-6 rounded-3xl border border-amber-500/30 bg-[#0c1222]/90 backdrop-blur space-y-5 shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+                <div class="flex justify-between items-center border-b border-amber-500/20 pb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl animate-bounce">⚡</span>
+                        <div>
+                            <h1 class="text-2xl font-black tracking-wider text-amber-400 uppercase flex items-center gap-2">
+                                KRRISH <span class="text-white">PILOT COCKPIT</span> 🕉️
+                            </h1>
+                            <p class="text-[10px] text-amber-300/70 font-mono tracking-widest uppercase">Indian Transit Guardian Protocol</p>
+                        </div>
                     </div>
-                    <button id="markDriverSelfAttendanceBtn" onclick="markDriverSelfAttendance()" class="uber-btn px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider">Mark My Attendance</button>
+                    <span class="bg-amber-500/10 border border-amber-500/40 text-amber-400 font-extrabold text-xs px-3.5 py-1.5 rounded-full uppercase tracking-wider">SUPERHERO MODE</span>
+                </div>
+
+                <!-- Active Stop Banner -->
+                <div class="bg-[#050914] border border-amber-500/40 p-4 rounded-2xl space-y-1 relative overflow-hidden shadow-inner">
+                    <span class="text-[10px] uppercase font-black text-amber-400 tracking-widest block">🎯 Divine Target Stop (Select Below)</span>
+                    <h3 id="driverActiveStopDisplay" class="text-base font-black text-white">No Stop Selected</h3>
+                </div>
+
+                <!-- Hanuman Attendance Shield Bar -->
+                <div class="bg-gradient-to-r from-[#170e04] to-[#0c1222] border border-amber-500/30 p-4 rounded-2xl flex flex-wrap justify-between items-center gap-3 shadow-md">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🛡️</span>
+                        <div>
+                            <h3 class="font-extrabold text-white text-xs uppercase tracking-wider">Hanuman Shield Attendance</h3>
+                            <p id="driverSelfAttendanceStatusText" class="text-xs text-amber-200/70 font-mono mt-0.5">Checking status...</p>
+                        </div>
+                    </div>
+                    <button id="markDriverSelfAttendanceBtn" onclick="markDriverSelfAttendance()" class="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 transition">Mark Attendance</button>
                 </div>
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 bg-zinc-900 p-4 rounded-2xl text-xs font-mono border border-zinc-800 text-slate-300">
-                    <div><span class="text-slate-500 block">Driver Name</span><strong id="driverNameDisplay" class="text-white">-</strong></div>
-                    <div><span class="text-slate-500 block">Driver ID</span><strong id="driverIdDisplay" class="text-yellow-400">-</strong></div>
-                    <div><span class="text-slate-500 block">Bus Number</span><strong id="driverBusNumberDisplay" class="text-white">-</strong></div>
-                    <div><span class="text-slate-500 block">Current Speed</span><strong id="speedDisplay" class="text-emerald-400">0.0 km/h</strong></div>
+                <!-- Krrish Mask Telemetry HUD -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-[#050811] p-4 rounded-2xl text-xs font-mono border border-amber-500/20 text-slate-300">
+                    <div class="space-y-0.5"><span class="text-amber-400/60 block font-bold text-[10px] uppercase">Pilot Name</span><strong id="driverNameDisplay" class="text-white font-sans font-bold text-sm">-</strong></div>
+                    <div class="space-y-0.5"><span class="text-amber-400/60 block font-bold text-[10px] uppercase">Pilot ID</span><strong id="driverIdDisplay" class="text-amber-400 font-bold text-sm">-</strong></div>
+                    <div class="space-y-0.5"><span class="text-amber-400/60 block font-bold text-[10px] uppercase">Chariot Bus No</span><strong id="driverBusNumberDisplay" class="text-white font-bold text-sm">-</strong></div>
+                    <div class="space-y-0.5"><span class="text-amber-400/60 block font-bold text-[10px] uppercase">⚡ Speed Gauge</span><strong id="speedDisplay" class="text-emerald-400 font-black text-sm">0.0 km/h</strong></div>
                 </div>
 
-                <div class="bg-zinc-900/60 p-3 rounded-xl text-xs font-mono border border-zinc-800/80 text-slate-400">
-                    Phone Contact: <strong id="driverPhoneDisplay" class="text-white">-</strong>
+                <div class="bg-[#050811]/70 p-3 rounded-xl text-xs font-mono border border-slate-800 text-amber-200/80">
+                    📞 Emergency Contact: <strong id="driverPhoneDisplay" class="text-white">-</strong>
                 </div>
 
+                <!-- SINGLE-CLICK TOGGLE BROADCAST BUTTONS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <button id="startBtn" class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/30 border border-emerald-400/30 transition">
+                        ⚡ Start Live GPS Broadcast
+                    </button>
+                    <button id="stopBtn" class="bg-gradient-to-r from-slate-900 to-slate-800 text-slate-500 cursor-not-allowed font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest border border-slate-800 transition opacity-50" disabled>
+                        🛑 Stop Broadcast (Inactive)
+                    </button>
+                </div>
+
+                <!-- SHAKTIMAAN CHAKRA ANNOUNCEMENT & EMERGENCY BUTTONS -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button id="startBtn" class="uber-btn py-3 rounded-xl text-xs uppercase font-black tracking-wider">Start Broadcast</button>
-                    <button id="stopBtn" class="bg-zinc-800 hover:bg-zinc-700 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider border border-zinc-700">Stop Broadcast</button>
+                    <button onclick="sendBusArrivedAnnouncement()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20">
+                        📢 Announce Stop Arrival
+                    </button>
+                    <button onclick="sendEmergencyAlert()" class="bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-red-600/40 animate-pulse border border-red-400/40">
+                        🚨 Shaktimaan Emergency Chakra
+                    </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onclick="sendBusArrivedAnnouncement()" class="bg-amber-500 hover:bg-amber-400 text-black font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg">📢 Announce Arrived at Stop</button>
-                    <button onclick="sendEmergencyAlert()" class="bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg animate-pulse">🚨 Emergency Alert</button>
-                </div>
-
-                <div class="pt-3 border-t border-zinc-800 space-y-2">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">📋 Click a Stop when Reached:</span>
-                    <div id="driverClickableStopsList" class="space-y-1.5 font-mono text-xs">
-                        <span class="text-zinc-500">Loading schedule...</span>
+                <!-- SCHEDULE STOP SELECTOR -->
+                <div class="pt-4 border-t border-amber-500/20 space-y-3">
+                    <span class="text-xs font-black text-amber-400 uppercase tracking-widest block flex items-center gap-2">
+                        <span>🕉️</span> Route Stops Timetable (Click to Set Stop)
+                    </span>
+                    <div id="driverClickableStopsList" class="space-y-2 font-mono text-xs">
+                        <span class="text-amber-200/50 italic">Loading schedule...</span>
                     </div>
                 </div>
             </div>
 
-            <div class="uber-card p-6 rounded-3xl space-y-4 border border-zinc-800">
-                <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                    <h2 class="text-lg font-bold text-white uppercase tracking-wider">Mark Route Students Attendance</h2>
-                    <span id="routeStudentCountBadge" class="bg-zinc-800 text-slate-300 text-xs px-3 py-1 rounded-full font-mono">0 Students</span>
+            <!-- STUDENT ATTENDANCE MANAGEMENT TABLE -->
+            <div class="hero-card p-6 rounded-3xl border border-amber-500/30 bg-[#0c1222]/90 backdrop-blur space-y-4 shadow-xl">
+                <div class="flex justify-between items-center border-b border-amber-500/20 pb-3">
+                    <h2 class="text-lg font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                        <span>👥</span> Route Student Attendance
+                    </h2>
+                    <span id="routeStudentCountBadge" class="bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs px-3 py-1 rounded-full font-mono font-bold">0 Recruits</span>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs font-mono">
                         <thead>
-                            <tr class="bg-zinc-900 text-slate-400 border-b border-zinc-800">
+                            <tr class="bg-[#050811] text-amber-400/80 border-b border-amber-500/20">
                                 <th class="p-3">Student Name</th>
-                                <th class="p-3">Pickup Stop 📍</th>
+                                <th class="p-3">Boarding Stop 📍</th>
                                 <th class="p-3">ID / Course</th>
-                                <th class="p-3 text-center">Action</th>
+                                <th class="p-3 text-center">Hero Status Action</th>
                             </tr>
                         </thead>
                         <tbody id="driverStudentAttendanceTableBody">
-                            <tr><td colspan="4" class="p-4 text-center text-zinc-500">Loading route students...</td></tr>
+                            <tr><td colspan="4" class="p-4 text-center text-slate-500">Loading route students...</td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <button onclick="location.reload()" class="bg-transparent text-slate-400 hover:text-white font-bold w-full py-2 rounded-xl text-xs uppercase tracking-wider">Logout</button>
+                <button onclick="location.reload()" class="bg-transparent hover:bg-slate-900 text-slate-400 hover:text-white font-bold w-full py-2.5 rounded-xl text-xs uppercase tracking-wider transition">Logout</button>
             </div>
         </div>
     </div>
@@ -391,7 +428,6 @@
     <!-- ==================== AVENGERS THEMED STUDENT DASHBOARD ==================== -->
     <div id="studentDashboard" style="display: none;" class="min-h-screen flex flex-col bg-[#070b14] text-slate-100 relative overflow-hidden">
         
-        <!-- Ambient Avengers Glow -->
         <div class="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-0 left-0 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -419,7 +455,6 @@
             <button onclick="dismissProximityAlert()" class="bg-cyan-950 hover:bg-black text-white px-3 py-1 rounded-lg text-[10px] font-bold">✕ Dismiss</button>
         </div>
 
-        <!-- Student Hero Banner Bar -->
         <div class="bg-[#0f172a]/90 border-b border-slate-800 p-4 flex flex-wrap justify-between items-center px-6 gap-3 relative z-10 backdrop-blur">
             <div class="text-xs space-y-1">
                 <div class="flex items-center gap-2">
@@ -433,7 +468,6 @@
                 </div>
             </div>
 
-            <!-- Iron Man Arc Reactor ETA Gauge & Captain America Shield Badge -->
             <div class="flex items-center gap-4">
                 <div class="arc-reactor-badge flex items-center gap-2 bg-[#070b14] border border-cyan-500/40 px-3 py-1.5 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.2)]">
                     <div class="w-4 h-4 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin"></div>
@@ -451,8 +485,6 @@
             <div id="studentMap" class="w-full md:w-2/3 h-full z-0"></div>
             
             <div class="w-full md:w-1/3 bg-[#0f172a] border-l border-cyan-500/20 p-5 overflow-y-auto space-y-6 shadow-2xl custom-scrollbar">
-                
-                <!-- Driver Contact HUD Box -->
                 <div class="bg-[#070b14] border border-cyan-500/30 p-4 rounded-2xl space-y-3 shadow-inner">
                     <h3 class="font-extrabold text-cyan-400 text-xs uppercase tracking-wider flex items-center gap-2">
                         <span>🤖</span> Assigned Driver HUD
@@ -464,7 +496,6 @@
                     <a id="driverCallButton" href="#" class="hidden block w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black py-2 rounded-xl text-center text-xs uppercase tracking-wider shadow-lg shadow-cyan-600/30 transition">📞 Call Driver Direct</a>
                 </div>
 
-                <!-- Avengers Route Timetable Timeline -->
                 <div class="bg-[#070b14] border border-slate-800 p-4 rounded-2xl space-y-3">
                     <h3 class="font-extrabold text-amber-400 text-xs uppercase tracking-wider flex items-center gap-2">
                         <span>⚡</span> Route Stops & Schedule
@@ -474,7 +505,6 @@
                     </div>
                 </div>
 
-                <!-- Captain America Attendance History -->
                 <div class="bg-[#070b14] border border-slate-800 p-4 rounded-2xl space-y-3">
                     <h3 class="font-extrabold text-red-400 text-xs uppercase tracking-wider flex items-center gap-2">
                         <span>🛡️</span> Attendance Records
