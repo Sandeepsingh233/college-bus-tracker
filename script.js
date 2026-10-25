@@ -34,13 +34,39 @@ function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
+// 30-Second Word-By-Word Typewriter Animation
+function startWordByWordTypewriter() {
+  const targetEl = document.getElementById('typewriterText');
+  if (!targetEl) return;
+
+  const fullText = "Welcome to Verma Bus Tracking Portal. Live GPS tracking, instant stop arrival announcements, geofencing proximity alerts, and automated attendance management.";
+  const words = fullText.split(' ');
+  
+  targetEl.innerHTML = '';
+  let currentWordIndex = 0;
+  const delayPerWord = Math.floor(30000 / words.length);
+
+  const timer = setInterval(() => {
+    if (currentWordIndex < words.length) {
+      targetEl.innerHTML += (currentWordIndex === 0 ? '' : ' ') + words[currentWordIndex];
+      currentWordIndex++;
+    } else {
+      clearInterval(timer);
+    }
+  }, delayPerWord);
+}
+
 // Visual Role Selection Card Logic
 function selectRoleCard(role) {
   document.getElementById('roleSelect').value = role;
   document.querySelectorAll('.role-card').forEach(card => card.classList.remove('active'));
   document.getElementById(`card-${role}`).classList.add('active');
 }
-window.addEventListener('DOMContentLoaded', () => selectRoleCard('student'));
+
+window.addEventListener('DOMContentLoaded', () => {
+  selectRoleCard('student');
+  startWordByWordTypewriter();
+});
 
 // Admin Dashboard Accordion Toggle
 function toggleAdminAccordion(id) {
@@ -628,7 +654,6 @@ function fetchAndRenderData() {
         routesMap[routeName].students.push(stu);
       });
 
-      // Render Route-Wise Attendance Overview
       if (routeWiseAttendanceContainer) {
         routeWiseAttendanceContainer.innerHTML = '';
         const routeNames = Object.keys(routesMap);
@@ -670,7 +695,6 @@ function fetchAndRenderData() {
         }
       }
 
-      // Render Registered Routes Cards
       if (routeCardsContainer) {
         routeCardsContainer.innerHTML = '';
         const routeNames = Object.keys(routesMap);
@@ -861,7 +885,6 @@ function initStudentDashboard(userData) {
   const studentRoute = (userData && userData.route) ? userData.route.trim() : "";
   const studentPickup = (userData && userData.pickupStop) ? userData.pickupStop.trim().toLowerCase() : "";
 
-  // Listen for Stop Arrival Announcement
   db.ref(`liveBus/stopArrivals`).on('value', (snapshot) => {
     const arrivals = snapshot.val() || {};
     const arrivalBanner = document.getElementById('busArrivedStopBanner');
@@ -1003,19 +1026,15 @@ function initStudentDashboard(userData) {
   });
 }
 
-// ==========================================
-// UNIVERSAL WATER RIPPLE & LIQUID SHAKE HANDLER
-// ==========================================
+// Universal Water Ripple & Liquid Shake Handler
 document.addEventListener('click', function (e) {
   const btn = e.target.closest('button, .role-card, a.button');
   if (!btn) return;
 
-  // 1. Trigger Liquid Shake/Bounce
   btn.classList.remove('water-tap-shake');
-  void btn.offsetWidth; // Force Reflow
+  void btn.offsetWidth;
   btn.classList.add('water-tap-shake');
 
-  // 2. Trigger Fluid Water Wave Ripple
   const rect = btn.getBoundingClientRect();
   const circle = document.createElement('span');
   const diameter = Math.max(rect.width, rect.height);
