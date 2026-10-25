@@ -97,56 +97,77 @@ button, .role-card, a.button {
     transform: translateY(-2px);
 }
 
-/* ADMIN THEMES */
+/* ==========================================
+   DYNAMIC ADMIN THEMES (CYBER / MATRIX / BATMAN)
+   ========================================== */
 .admin-theme {
     background-color: #070b14;
     background-image: radial-gradient(at 0% 0%, rgba(0, 170, 255, 0.08) 0px, transparent 50%);
     color: #f1f5f9;
+    transition: all 0.4s ease;
 }
 
-.admin-theme.matrix-theme {
-    background-color: #020c05 !important;
-    background-image: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%) !important;
-}
-
-.admin-theme.batman-theme {
-    background-color: #09090b !important;
-    background-image: radial-gradient(at 0% 0%, rgba(234, 179, 8, 0.1) 0px, transparent 50%) !important;
-}
-
-.admin-card {
+/* 1. CYBER BLUE THEME (Default) */
+.admin-theme.cyber-theme .admin-card {
     background: #0f172a;
     border: 1px solid rgba(0, 170, 255, 0.2);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 170, 255, 0.03);
-    transition: all 0.25s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
 }
-
-.admin-card:hover {
-    border-color: rgba(0, 170, 255, 0.4);
-    box-shadow: 0 6px 25px rgba(0, 170, 255, 0.12);
-}
-
-.admin-input {
+.admin-theme.cyber-theme .admin-input {
     background: #070b14;
     border: 1px solid rgba(0, 170, 255, 0.3);
     color: #f8fafc;
 }
-
-.admin-input:focus {
-    border-color: #00aaff;
-    box-shadow: 0 0 12px rgba(0, 170, 255, 0.4);
-}
-
-.admin-btn-cyan {
+.admin-theme.cyber-theme .admin-btn-cyan {
     background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
     color: #fff;
     box-shadow: 0 0 15px rgba(0, 180, 219, 0.35);
-    transition: all 0.2s ease;
 }
 
-.admin-btn-cyan:hover {
-    box-shadow: 0 0 25px rgba(0, 180, 219, 0.6);
-    transform: translateY(-1px);
+/* 2. MATRIX GREEN THEME */
+.admin-theme.matrix-theme {
+    background-color: #020c05 !important;
+    background-image: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.2) 0px, transparent 50%) !important;
+}
+.admin-theme.matrix-theme .text-cyan-400 {
+    color: #10b981 !important;
+}
+.admin-theme.matrix-theme .border-cyan-500\/20,
+.admin-theme.matrix-theme .border-cyan-500\/30 {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+}
+.admin-theme.matrix-theme .admin-card {
+    background: #041d0e !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), inset 0 0 12px rgba(16, 185, 129, 0.1) !important;
+}
+.admin-theme.matrix-theme .admin-btn-cyan {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* 3. BATMAN DARK KNIGHT YELLOW THEME */
+.admin-theme.batman-theme {
+    background-color: #09090b !important;
+    background-image: radial-gradient(at 0% 0%, rgba(234, 179, 8, 0.2) 0px, transparent 50%) !important;
+}
+.admin-theme.batman-theme .text-cyan-400 {
+    color: #eab308 !important;
+}
+.admin-theme.batman-theme .border-cyan-500\/20,
+.admin-theme.batman-theme .border-cyan-500\/30 {
+    border-color: rgba(234, 179, 8, 0.4) !important;
+}
+.admin-theme.batman-theme .admin-card {
+    background: #18181b !important;
+    border-color: rgba(234, 179, 8, 0.4) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), inset 0 0 12px rgba(234, 179, 8, 0.1) !important;
+}
+.admin-theme.batman-theme .admin-btn-cyan {
+    background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+    color: #000000 !important;
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.4) !important;
 }
 
 .uber-theme {
