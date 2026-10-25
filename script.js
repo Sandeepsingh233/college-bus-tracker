@@ -250,9 +250,17 @@ function showDashboard(role, userData = null) {
 // ==========================================
 function changeAdminTheme(theme) {
   const adminDash = document.getElementById('adminDashboard');
-  adminDash.className = "admin-theme min-h-screen flex flex-col";
-  if (theme === 'matrix') adminDash.classList.add('matrix-theme');
-  else if (theme === 'batman') adminDash.classList.add('batman-theme');
+  if (!adminDash) return;
+
+  adminDash.classList.remove('cyber-theme', 'matrix-theme', 'batman-theme');
+
+  if (theme === 'matrix') {
+    adminDash.classList.add('matrix-theme');
+  } else if (theme === 'batman') {
+    adminDash.classList.add('batman-theme');
+  } else {
+    adminDash.classList.add('cyber-theme');
+  }
 }
 
 function toggleFullscreenMap() {
