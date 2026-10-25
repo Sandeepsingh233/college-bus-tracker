@@ -26,6 +26,7 @@ let proximityDismissed = false;
 let stopArrivalDismissed = false;
 let selectedCurrentStop = "None";
 let isMapFullscreen = false;
+let isBroadcasting = false; // State flag for Driver Broadcast Toggle
 
 function getTodayDateString() {
   const d = new Date();
@@ -331,7 +332,7 @@ function markDriverSelfAttendance() {
   };
 
   db.ref(`attendance/drivers/${today}/${username}`).set(attendanceObj).then(() => {
-    alert("Aapki (Driver) attendance successfully mark ho gayi hai!");
+    alert("⚡ Lord Hanuman Shield Activated! Driver Attendance Marked Present!");
     checkDriverSelfAttendanceStatus();
   });
 }
@@ -347,10 +348,10 @@ function checkDriverSelfAttendanceStatus() {
     const btn = document.getElementById('markDriverSelfAttendanceBtn');
 
     if (data && data.status === "Present") {
-      if (statusText) statusText.innerText = "Status: Present Today ✅";
-      if (btn) { btn.innerText = "Marked ✅"; btn.disabled = true; btn.style.opacity = '0.5'; }
+      if (statusText) statusText.innerText = "Hanuman Shield Status: Present Today 🛡️✅";
+      if (btn) { btn.innerText = "Shield Marked ✅"; btn.disabled = true; btn.style.opacity = '0.5'; }
     } else {
-      if (statusText) statusText.innerText = "Status: Not Marked Yet ❌";
+      if (statusText) statusText.innerText = "Hanuman Shield Status: Pending ⌛";
     }
   });
 }
@@ -590,7 +591,7 @@ function sendEmergencyAlert() {
     route: currentUserData.route || "Unknown Route",
     timestamp: Date.now()
   };
-  db.ref(`liveBus/emergencies/${currentUserData.username}`).set(emergencyData).then(() => alert("🚨 Emergency alert sent!"));
+  db.ref(`liveBus/emergencies/${currentUserData.username}`).set(emergencyData).then(() => alert("🚨 Shaktimaan Emergency Chakra Activated!"));
 }
 
 function clearEmergencyAlerts() {
@@ -613,14 +614,14 @@ function sendBusArrivedAnnouncement() {
   };
 
   db.ref(`liveBus/stopArrivals/${currentUserData.route}`).set(arrivalObj).then(() => {
-    alert(`📢 Announcement sent! Bus Arrived at: ${selectedCurrentStop}`);
+    alert(`📢 Announcement Sent! Bus Arrived at Divine Stop: ${selectedCurrentStop}`);
   });
 }
 
 function selectDriverStop(stopName) {
   selectedCurrentStop = stopName;
   const displayEl = document.getElementById('driverActiveStopDisplay');
-  if (displayEl) displayEl.innerText = `🛑 Selected Stop: ${stopName}`;
+  if (displayEl) displayEl.innerText = `🛑 Selected Target Stop: ${stopName}`;
 }
 
 // ==========================================
@@ -877,7 +878,7 @@ function listenForWarnings() {
 }
 
 // ==========================================
-// DRIVER DASHBOARD
+// DRIVER DASHBOARD (INDIAN SUPERHERO INTEGRATION & SINGLE CLICK BROADCAST)
 // ==========================================
 let watchId = null;
 
@@ -892,13 +893,13 @@ function initDriverDashboard(userData) {
     if (userData.schedule && stopsListEl) {
       const lines = userData.schedule.split('\n').map(s => s.trim()).filter(Boolean);
       stopsListEl.innerHTML = lines.map(line => `
-        <div onclick="selectDriverStop('${line.replace(/'/g, "\\'")}')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-xl cursor-pointer flex justify-between items-center transition">
-          <span class="text-slate-200 font-semibold">${line}</span>
-          <span class="bg-cyan-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase">Select 📍</span>
+        <div onclick="selectDriverStop('${line.replace(/'/g, "\\'")}')" class="bg-[#050811] hover:bg-slate-900 border border-amber-500/30 p-3 rounded-xl cursor-pointer flex justify-between items-center transition shadow-inner">
+          <span class="text-slate-100 font-bold flex items-center gap-2"><span>🎯</span> ${line}</span>
+          <span class="bg-gradient-to-r from-amber-500 to-orange-500 text-black font-black px-2.5 py-1 rounded-lg text-[10px] uppercase shadow">Set Stop 📍</span>
         </div>
       `).join('');
     } else if (stopsListEl) {
-      stopsListEl.innerHTML = `<span class="text-zinc-500 italic">No schedule set by admin.</span>`;
+      stopsListEl.innerHTML = `<span class="text-amber-200/50 italic">No schedule set by admin.</span>`;
     }
   }
 
@@ -926,26 +927,26 @@ function initDriverDashboard(userData) {
         }
       });
 
-      if (badge) badge.innerText = `${matchingStudents.length} Students`;
+      if (badge) badge.innerText = `${matchingStudents.length} Recruits`;
       if (matchingStudents.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-zinc-500">No students on your route.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No students on your route.</td></tr>';
         return;
       }
 
       matchingStudents.forEach(student => {
         const attRecord = todayAttendance[student.username];
         const currentStatus = attRecord ? attRecord.status : "Pending";
-        let statusBadge = currentStatus === "Present" ? '<span class="text-emerald-400 font-bold">Present ✅</span>' : currentStatus === "Absent" ? '<span class="text-red-400 font-bold">Absent ❌</span>' : '<span class="text-zinc-500">Pending</span>';
+        let statusBadge = currentStatus === "Present" ? '<span class="text-emerald-400 font-bold flex items-center justify-center gap-1">🛡️ Present ✅</span>' : currentStatus === "Absent" ? '<span class="text-red-400 font-bold flex items-center justify-center gap-1">🛡️ Absent ❌</span>' : '<span class="text-slate-500">Pending</span>';
 
         tableBody.innerHTML += `
-          <tr class="border-b border-zinc-800 hover:bg-zinc-900/50">
+          <tr class="border-b border-amber-500/10 hover:bg-slate-900/50">
             <td class="p-3 font-semibold text-white">${student.name}</td>
             <td class="p-3 text-amber-300 font-semibold">${student.pickupStop || 'Not Set'}</td>
             <td class="p-3 text-slate-400">${student.studentId || 'N/A'} (${student.course || ''})</td>
             <td class="p-3 text-center">
               <div class="flex justify-center items-center gap-2">
-                <button onclick="driverMarkStudentAttendance('${student.username}', 'Present')" class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Present</button>
-                <button onclick="driverMarkStudentAttendance('${student.username}', 'Absent')" class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Absent</button>
+                <button onclick="driverMarkStudentAttendance('${student.username}', 'Present')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase shadow">Present</button>
+                <button onclick="driverMarkStudentAttendance('${student.username}', 'Absent')" class="bg-red-600 hover:bg-red-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase shadow">Absent</button>
               </div>
               <div class="mt-1 text-[11px]">${statusBadge}</div>
             </td>
@@ -955,9 +956,26 @@ function initDriverDashboard(userData) {
     });
   });
 
-  document.getElementById('startBtn').onclick = () => {
-    if (!navigator.geolocation) return alert("Geolocation not supported.");
-    alert("GPS Broadcasting Started!");
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+
+  // START BROADCAST LOGIC (SINGLE-CLICK TOGGLE)
+  startBtn.onclick = () => {
+    if (isBroadcasting) return; // Prevent double trigger
+    if (!navigator.geolocation) return alert("Geolocation not supported on this device.");
+
+    alert("⚡ Krrish GPS Telemetry Activated! Broadcasting live location...");
+    
+    // Toggle Button UI States
+    isBroadcasting = true;
+    startBtn.disabled = true;
+    startBtn.className = "bg-slate-900 text-slate-600 cursor-not-allowed font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest border border-slate-800 transition opacity-50";
+    startBtn.innerText = "⚡ GPS Broadcasting Active (Locked)";
+
+    stopBtn.disabled = false;
+    stopBtn.className = "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white cursor-pointer font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest border border-red-500/40 shadow-lg shadow-red-600/30 transition animate-pulse";
+    stopBtn.innerText = "🛑 Stop Live Broadcast";
+
     watchId = navigator.geolocation.watchPosition((position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
@@ -967,16 +985,31 @@ function initDriverDashboard(userData) {
       db.ref(`liveBus/buses/${userData.username}`).set({
         lat, lng, speed, driver: userData.username, driverName: userData.name, busNumber: userData.busNumber, route: userData.route, updatedAt: Date.now()
       });
-    }, (error) => alert("Location error: " + error.message), { enableHighAccuracy: true });
+    }, (error) => {
+      alert("Location error: " + error.message);
+      // Revert if error occurs
+      stopBtn.click();
+    }, { enableHighAccuracy: true });
   };
 
-  document.getElementById('stopBtn').onclick = () => {
+  // STOP BROADCAST LOGIC
+  stopBtn.onclick = () => {
     if (watchId !== null) {
       navigator.geolocation.clearWatch(watchId);
       watchId = null;
-      db.ref(`liveBus/buses/${userData.username}`).remove();
-      alert("Broadcast stopped.");
     }
+    db.ref(`liveBus/buses/${userData.username}`).remove();
+    alert("GPS Broadcast Stopped Successfully.");
+
+    // Reset Button UI States
+    isBroadcasting = false;
+    startBtn.disabled = false;
+    startBtn.className = "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/30 border border-emerald-400/30 transition";
+    startBtn.innerText = "⚡ Start Live GPS Broadcast";
+
+    stopBtn.disabled = true;
+    stopBtn.className = "bg-gradient-to-r from-slate-900 to-slate-800 text-slate-500 cursor-not-allowed font-black py-3.5 rounded-2xl text-xs uppercase tracking-widest border border-slate-800 transition opacity-50";
+    stopBtn.innerText = "🛑 Stop Broadcast (Inactive)";
   };
 }
 
