@@ -165,26 +165,17 @@ button, .role-card, a.button {
     box-shadow: 0 0 15px rgba(234, 179, 8, 0.4) !important;
 }
 
-.uber-theme {
-    background-color: #000000;
-    color: #ffffff;
+/* INDIAN HERO THEME FOR DRIVER PANEL */
+.indian-hero-theme {
+    background: radial-gradient(ellipse at top, #140d04 0%, #050811 70%);
 }
 
-.uber-card {
-    background-color: #121212;
-    border: 1px solid #242424;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.9);
+.hero-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.uber-btn {
-    background-color: #ffffff;
-    color: #000000;
-    transition: all 0.2s ease;
-}
-
-.uber-btn:hover {
-    background-color: #e2e2e2;
-    transform: scale(1.01);
+.hero-card:hover {
+    box-shadow: 0 10px 40px rgba(245, 158, 11, 0.15);
 }
 
 #adminMap {
