@@ -7,6 +7,13 @@ body {
     box-sizing: border-box;
 }
 
+/* Role Card Selection Style */
+.role-card.active {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
 .admin-theme {
     background-color: #090d16;
     background-image: radial-gradient(at 0% 0%, rgba(0, 170, 255, 0.08) 0px, transparent 50%);
