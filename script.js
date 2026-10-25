@@ -25,6 +25,7 @@ let currentRole = null;
 let proximityDismissed = false;
 let stopArrivalDismissed = false;
 let selectedCurrentStop = "None";
+let isMapFullscreen = false;
 
 function getTodayDateString() {
   const d = new Date();
@@ -36,45 +37,37 @@ function getTodayDateString() {
 
 // 30-SECOND CINEMATIC POPUP REVEAL SEQUENCE
 function runSequentialLoginReveal() {
-  // Step 0: Main Card Popup (0s)
   setTimeout(() => {
     document.getElementById('loginMainBox').classList.add('seq-show');
   }, 200);
 
-  // Step 1: Badge Reveal (3s)
   setTimeout(() => {
     document.getElementById('seq-badge').classList.add('seq-show');
   }, 3000);
 
-  // Step 2: VERMA BUS PORTAL Title Reveal (5s)
   setTimeout(() => {
     document.getElementById('seq-title').classList.add('seq-show');
   }, 5000);
 
-  // Step 3: Typewriter Description Reveal (10s to 20s)
   setTimeout(() => {
     const typewriterEl = document.getElementById('typewriterText');
     typewriterEl.classList.add('seq-show');
     startWordByWordTypewriter();
   }, 10000);
 
-  // Step 4: Spider-Man Heroic Card Reveal (20s)
   setTimeout(() => {
     document.getElementById('seq-hero-card').classList.add('seq-show');
   }, 20000);
 
-  // Step 5: Role Cards Staggered Popups (23s, 25s, 27s)
   setTimeout(() => { document.getElementById('card-student').classList.add('seq-show'); }, 23000);
   setTimeout(() => { document.getElementById('card-driver').classList.add('seq-show'); }, 25000);
   setTimeout(() => { document.getElementById('card-admin').classList.add('seq-show'); }, 27000);
 
-  // Step 6: Form Reveal (29s - 30s)
   setTimeout(() => {
     document.getElementById('seq-form').classList.add('seq-show');
   }, 29000);
 }
 
-// Typewriter Function (Runs within 10-second duration inside timeline)
 function startWordByWordTypewriter() {
   const targetEl = document.getElementById('typewriterText');
   if (!targetEl) return;
@@ -84,7 +77,7 @@ function startWordByWordTypewriter() {
   
   targetEl.innerHTML = '';
   let currentWordIndex = 0;
-  const delayPerWord = Math.floor(10000 / words.length); // 10s word sync
+  const delayPerWord = Math.floor(10000 / words.length);
 
   const timer = setInterval(() => {
     if (currentWordIndex < words.length) {
@@ -96,7 +89,6 @@ function startWordByWordTypewriter() {
   }, delayPerWord);
 }
 
-// Visual Role Selection Card Logic
 function selectRoleCard(role) {
   document.getElementById('roleSelect').value = role;
   document.querySelectorAll('.role-card').forEach(card => card.classList.remove('active'));
@@ -108,7 +100,6 @@ window.addEventListener('DOMContentLoaded', () => {
   runSequentialLoginReveal();
 });
 
-// Admin Dashboard Accordion Toggle
 function toggleAdminAccordion(id) {
   const el = document.getElementById(id);
   const icon = document.getElementById(`icon-${id}`);
@@ -168,7 +159,6 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Audio Beep Sound Generator
 function playBeepSound() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -253,6 +243,67 @@ function showDashboard(role, userData = null) {
     initStudentDashboard(userData);
   }
   listenForWarnings();
+}
+
+// ==========================================
+// ADMIN CUSTOMIZERS & EXPORT TOOLS
+// ==========================================
+function changeAdminTheme(theme) {
+  const adminDash = document.getElementById('adminDashboard');
+  adminDash.className = "admin-theme min-h-screen flex flex-col";
+  if (theme === 'matrix') adminDash.classList.add('matrix-theme');
+  else if (theme === 'batman') adminDash.classList.add('batman-theme');
+}
+
+function toggleFullscreenMap() {
+  const sidebar = document.getElementById('adminLeftSidebar');
+  const mapContainer = document.getElementById('adminMapContainer');
+  const btn = document.getElementById('fullscreenMapBtn');
+
+  isMapFullscreen = !isMapFullscreen;
+  if (isMapFullscreen) {
+    sidebar.style.display = 'none';
+    mapContainer.classList.remove('md:w-1/2');
+    mapContainer.classList.add('w-full');
+    btn.innerText = "🗗 Restore Split View";
+  } else {
+    sidebar.style.display = 'block';
+    mapContainer.classList.remove('w-full');
+    mapContainer.classList.add('md:w-1/2');
+    btn.innerText = "⛶ Fullscreen Map";
+  }
+  if (adminMap) adminMap.invalidateSize();
+}
+
+function exportAttendanceCSV() {
+  const dateFilter = document.getElementById('attendanceDateFilter');
+  const selectedDate = dateFilter ? dateFilter.value : getTodayDateString();
+
+  db.ref(`attendance`).once('value', (snapshot) => {
+    const attData = snapshot.val() || {};
+    const driverAtt = (attData.drivers && attData.drivers[selectedDate]) || {};
+    const studentAtt = (attData.students && attData.students[selectedDate]) || {};
+
+    let csvContent = "data:text/csv;charset=utf-8,Role,Name,ID/Username,Route,Status,Date\n";
+
+    Object.keys(driverAtt).forEach(key => {
+      const d = driverAtt[key];
+      csvContent += `Driver,"${d.name || ''}",${d.username || ''},"${d.route || ''}",${d.status || 'N/A'},${selectedDate}\n`;
+    });
+
+    Object.keys(studentAtt).forEach(key => {
+      const s = studentAtt[key];
+      csvContent += `Student,"${s.name || ''}",${s.studentId || s.username || ''},"${s.route || ''}",${s.status || 'N/A'},${selectedDate}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `VermaBus_Attendance_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
 }
 
 // ==========================================
@@ -585,15 +636,21 @@ function initAdminDashboard() {
     const emergencies = snapshot.val();
     const container = document.getElementById('adminEmergencyContainer');
     const list = document.getElementById('adminEmergencyList');
+    const statEmergency = document.getElementById('statEmergencyCount');
+
     if (!emergencies) {
       if (container) container.classList.add('hidden');
       if (list) list.innerHTML = '';
+      if (statEmergency) statEmergency.innerText = "0";
       return;
     }
     if (container) container.classList.remove('hidden');
+    const emKeys = Object.keys(emergencies);
+    if (statEmergency) statEmergency.innerText = emKeys.length;
+
     if (list) {
       list.innerHTML = '';
-      Object.keys(emergencies).forEach(key => {
+      emKeys.forEach(key => {
         const em = emergencies[key];
         list.innerHTML += `<p>• Driver: <strong>${em.driverName}</strong> | Bus No: <strong>${em.busNumber}</strong> | Route: ${em.route}</p>`;
       });
@@ -603,10 +660,12 @@ function initAdminDashboard() {
   db.ref('liveBus/buses').on('value', (snapshot) => {
     const buses = snapshot.val();
     const activeCountEl = document.getElementById('activeBusesCount');
+    const statActiveBuses = document.getElementById('statActiveBuses');
     const activeBusTableBody = document.getElementById('adminActiveBusesTableBody');
 
     if (!buses) {
       if (activeCountEl) activeCountEl.innerText = "0 Active Buses";
+      if (statActiveBuses) statActiveBuses.innerText = "0";
       if (activeBusTableBody) activeBusTableBody.innerHTML = '<tr><td colspan="5" class="p-3 text-center text-slate-500">No active buses broadcasting.</td></tr>';
       Object.keys(adminBusMarkers).forEach(key => adminMap.removeLayer(adminBusMarkers[key]));
       adminBusMarkers = {};
@@ -615,6 +674,7 @@ function initAdminDashboard() {
 
     const activeKeys = Object.keys(buses);
     if (activeCountEl) activeCountEl.innerText = `${activeKeys.length} Active Bus${activeKeys.length > 1 ? 'es' : ''}`;
+    if (statActiveBuses) statActiveBuses.innerText = activeKeys.length;
 
     if (activeBusTableBody) {
       activeBusTableBody.innerHTML = '';
@@ -669,11 +729,19 @@ function fetchAndRenderData() {
 
   const routeCardsContainer = document.getElementById('routeCardsContainer');
   const routeWiseAttendanceContainer = document.getElementById('routeWiseAttendanceContainer');
+  const statTotalStudents = document.getElementById('statTotalStudents');
+  const statTotalDrivers = document.getElementById('statTotalDrivers');
 
   db.ref('users').once('value', (userSnapshot) => {
     const usersData = userSnapshot.val() || {};
     const drivers = usersData.drivers || {};
     const students = usersData.students || {};
+
+    const driverKeys = Object.keys(drivers);
+    const studentKeys = Object.keys(students);
+
+    if (statTotalDrivers) statTotalDrivers.innerText = driverKeys.length;
+    if (statTotalStudents) statTotalStudents.innerText = studentKeys.length;
 
     db.ref(`attendance`).once('value', (attSnapshot) => {
       const attData = attSnapshot.val() || {};
@@ -681,13 +749,13 @@ function fetchAndRenderData() {
       const studentAtt = (attData.students && attData.students[selectedDate]) || {};
 
       const routesMap = {};
-      Object.keys(drivers).forEach(username => {
+      driverKeys.forEach(username => {
         const drv = drivers[username];
         const routeName = drv.route ? drv.route.trim() : "Unassigned Route";
         if (!routesMap[routeName]) routesMap[routeName] = { drivers: [], students: [] };
         routesMap[routeName].drivers.push(drv);
       });
-      Object.keys(students).forEach(username => {
+      studentKeys.forEach(username => {
         const stu = students[username];
         const routeName = stu.route ? stu.route.trim() : "Unassigned Route";
         if (!routesMap[routeName]) routesMap[routeName] = { drivers: [], students: [] };
