@@ -7,27 +7,41 @@ body {
     box-sizing: border-box;
 }
 
+/* Spider-Man Hero Card Style */
+.spiderman-hero-card {
+    background: linear-gradient(135deg, #1e1b4b 0%, #311033 50%, #172554 100%);
+    box-shadow: 0 10px 30px rgba(225, 29, 72, 0.15), inset 0 0 20px rgba(59, 130, 246, 0.2);
+    position: relative;
+}
+
 /* Role Card Selection Style */
 .role-card.active {
-    border-color: #3b82f6 !important;
-    background: rgba(59, 130, 246, 0.1) !important;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    border-color: #06b6d4 !important;
+    background: rgba(6, 182, 212, 0.08) !important;
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
+    transform: translateY(-2px);
 }
 
 .admin-theme {
-    background-color: #090d16;
+    background-color: #070b14;
     background-image: radial-gradient(at 0% 0%, rgba(0, 170, 255, 0.08) 0px, transparent 50%);
     color: #f1f5f9;
 }
 
 .admin-card {
     background: #0f172a;
-    border: 1px solid rgba(0, 170, 255, 0.25);
-    box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), inset 0 0 10px rgba(0, 170, 255, 0.05);
+    border: 1px solid rgba(0, 170, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(0, 170, 255, 0.03);
+    transition: all 0.25s ease;
+}
+
+.admin-card:hover {
+    border-color: rgba(0, 170, 255, 0.4);
+    box-shadow: 0 6px 25px rgba(0, 170, 255, 0.12);
 }
 
 .admin-input {
-    background: #090d16;
+    background: #070b14;
     border: 1px solid rgba(0, 170, 255, 0.3);
     color: #f8fafc;
 }
@@ -37,15 +51,15 @@ body {
     box-shadow: 0 0 12px rgba(0, 170, 255, 0.4);
 }
 
-.admin-btn-blue {
-    background: linear-gradient(135deg, #0088ff 0%, #00d2ff 100%);
-    color: #000;
-    box-shadow: 0 0 15px rgba(0, 170, 255, 0.4);
+.admin-btn-cyan {
+    background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(0, 180, 219, 0.35);
     transition: all 0.2s ease;
 }
 
-.admin-btn-blue:hover {
-    box-shadow: 0 0 25px rgba(0, 170, 255, 0.7);
+.admin-btn-cyan:hover {
+    box-shadow: 0 0 25px rgba(0, 180, 219, 0.6);
     transform: translateY(-1px);
 }
 
@@ -82,7 +96,7 @@ body {
 .leaflet-popup-content-wrapper {
     background: #111827 !important;
     color: #e2e8f0 !important;
-    border: 1px solid #3b82f6 !important;
+    border: 1px solid #06b6d4 !important;
     border-radius: 12px !important;
     font-family: monospace !important;
 }
@@ -91,16 +105,16 @@ body {
     background: #111827 !important;
 }
 
-::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }
-::-webkit-scrollbar-track {
-    background: #0a0f1d;
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #070b14;
 }
-::-webkit-scrollbar-thumb {
-    background: #1f2937;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1e293b;
     border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
-    background: #374151;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #334155;
 }
