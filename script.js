@@ -392,13 +392,13 @@ function checkMyAttendanceStatus() {
     if (!statusText) return;
 
     if (data && data.status === "Present") {
-      statusText.innerText = "Attendance Today: Present ✅";
+      statusText.innerText = "Attendance: Present ✅";
       statusText.className = "text-xs font-bold text-emerald-400";
     } else if (data && data.status === "Absent") {
-      statusText.innerText = "Attendance Today: Absent ❌";
+      statusText.innerText = "Attendance: Absent ❌";
       statusText.className = "text-xs font-bold text-red-400";
     } else {
-      statusText.innerText = "Attendance Today: Not Marked Yet ⏳";
+      statusText.innerText = "Attendance: Pending ⏳";
       statusText.className = "text-xs font-bold text-slate-400";
     }
   });
@@ -423,11 +423,11 @@ function loadStudentAttendanceHistory() {
         hasRecords = true;
         const record = dayRecords[username];
         const statusBadge = record.status === "Present" 
-          ? '<span class="text-emerald-400 font-extrabold">Present ✅</span>' 
-          : '<span class="text-red-400 font-extrabold">Absent ❌</span>';
+          ? '<span class="text-emerald-400 font-extrabold flex items-center gap-1">🛡️ Present ✅</span>' 
+          : '<span class="text-red-400 font-extrabold flex items-center gap-1">🛡️ Absent ❌</span>';
 
         historyBody.innerHTML += `
-          <tr class="border-b border-slate-800">
+          <tr class="border-b border-slate-800 hover:bg-slate-900/50">
             <td class="p-2 font-bold text-slate-300">${date}</td>
             <td class="p-2">${statusBadge}</td>
           </tr>
@@ -981,7 +981,7 @@ function initDriverDashboard(userData) {
 }
 
 // ==========================================
-// STUDENT DASHBOARD
+// STUDENT DASHBOARD (AVENGERS INTERFACE)
 // ==========================================
 let studentMap = null;
 let studentBusMarker = null;
@@ -992,7 +992,6 @@ function initStudentDashboard(userData) {
     document.getElementById('studentIdDisplay').innerText = userData.studentId || "N/A";
     document.getElementById('studentCourseDisplay').innerText = userData.course || "N/A";
     document.getElementById('studentRouteDisplay').innerText = userData.route || "N/A";
-    document.getElementById('studentPickupStopDisplay').innerText = userData.pickupStop || "Not Set";
   }
 
   checkMyAttendanceStatus();
@@ -1057,10 +1056,12 @@ function initStudentDashboard(userData) {
           const lines = assignedDriver.schedule.split('\n');
           timetableBox.innerHTML = lines.map(line => {
             const isMyStop = studentPickup && line.toLowerCase().includes(studentPickup);
-            const borderClass = isMyStop ? 'border-amber-400 bg-amber-950/30' : 'border-cyan-500';
-            const badge = isMyStop ? '<span class="ml-2 bg-amber-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded">MY STOP📍</span>' : '';
+            const borderClass = isMyStop ? 'border-amber-400 bg-amber-950/30' : 'border-cyan-500/50';
+            const sticker = isMyStop ? '🎯 MY STOP' : '📍';
+            const badge = isMyStop ? '<span class="ml-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow">TARGET STOP</span>' : '';
             return `
-              <div class="flex items-center gap-3 border-l-2 ${borderClass} pl-3 py-1.5 rounded-r-lg">
+              <div class="flex items-center gap-3 border-l-2 ${borderClass} pl-3 py-1.5 rounded-r-lg bg-slate-900/40">
+                <span class="text-xs">${sticker}</span>
                 <div><strong class="text-slate-200">${line.trim()}</strong>${badge}</div>
               </div>
             `;
@@ -1088,7 +1089,7 @@ function initStudentDashboard(userData) {
 
     if (!buses) {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
-      etaDisplay.innerText = "Bus ETA: Offline";
+      etaDisplay.innerText = "ETA: Bus Offline";
       if (proximityBanner) proximityBanner.classList.add('hidden');
       proximityDismissed = false;
       return;
@@ -1107,7 +1108,7 @@ function initStudentDashboard(userData) {
       const lat = foundBus.lat;
       const lng = foundBus.lng;
       const busNo = foundBus.busNumber || "Bus";
-      const popupContent = `<b>Bus: ${busNo}</b><br>Route: ${foundBus.route}<br>Driver: ${foundBus.driverName}`;
+      const popupContent = `<b>⚡ Bus: ${busNo}</b><br>Route: ${foundBus.route}<br>Driver: ${foundBus.driverName}`;
 
       if (!studentBusMarker) {
         studentBusMarker = L.marker([lat, lng]).addTo(studentMap).bindPopup(popupContent);
@@ -1117,7 +1118,7 @@ function initStudentDashboard(userData) {
       }
       studentMap.setView([lat, lng], 15);
 
-      etaDisplay.innerText = `Bus ETA: ~5 mins (${busNo})`;
+      etaDisplay.innerText = `ETA: ~5 mins (${busNo})`;
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
@@ -1135,7 +1136,7 @@ function initStudentDashboard(userData) {
       }
     } else {
       if (studentBusMarker) { studentMap.removeLayer(studentBusMarker); studentBusMarker = null; }
-      etaDisplay.innerText = "Bus ETA: Bus offline";
+      etaDisplay.innerText = "ETA: Bus Offline";
       if (proximityBanner) proximityBanner.classList.add('hidden');
       proximityDismissed = false;
     }
