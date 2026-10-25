@@ -7,6 +7,20 @@ body {
     box-sizing: border-box;
 }
 
+/* SEQUENTIAL REVEAL POPUP ANIMATION CLASSES */
+.seq-hidden {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.seq-show {
+    opacity: 1 !important;
+    transform: scale(1) translateY(0px) !important;
+    pointer-events: auto !important;
+}
+
 /* VERMA BUS PORTAL TITLE STYLING */
 .verma-title-theme span {
     display: inline-block;
@@ -18,9 +32,7 @@ body {
     filter: drop-shadow(0 0 12px #22d3ee);
 }
 
-/* ==========================================
-   TYPEWRITER CURSOR EFFECT
-   ========================================== */
+/* TYPEWRITER CURSOR EFFECT */
 #typewriterText::after {
     content: '|';
     color: #06b6d4;
@@ -33,10 +45,7 @@ body {
     50% { opacity: 0; }
 }
 
-/* ==========================================
-   WATER RIPPLE & SHAKE ANIMATION (GLOBAL)
-   ========================================== */
-
+/* WATER RIPPLE & SHAKE ANIMATION */
 button, .role-card, a.button {
     position: relative !important;
     overflow: hidden !important;
