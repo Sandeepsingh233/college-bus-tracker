@@ -1002,3 +1002,36 @@ function initStudentDashboard(userData) {
     }
   });
 }
+
+// ==========================================
+// UNIVERSAL WATER RIPPLE & LIQUID SHAKE HANDLER
+// ==========================================
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('button, .role-card, a.button');
+  if (!btn) return;
+
+  // 1. Trigger Liquid Shake/Bounce
+  btn.classList.remove('water-tap-shake');
+  void btn.offsetWidth; // Force Reflow
+  btn.classList.add('water-tap-shake');
+
+  // 2. Trigger Fluid Water Wave Ripple
+  const rect = btn.getBoundingClientRect();
+  const circle = document.createElement('span');
+  const diameter = Math.max(rect.width, rect.height);
+  const radius = diameter / 2;
+
+  circle.style.width = circle.style.height = `${diameter}px`;
+  circle.style.left = `${e.clientX - rect.left - radius}px`;
+  circle.style.top = `${e.clientY - rect.top - radius}px`;
+  circle.classList.add('water-ripple');
+
+  const existing = btn.querySelector('.water-ripple');
+  if (existing) existing.remove();
+
+  btn.appendChild(circle);
+
+  setTimeout(() => {
+    circle.remove();
+  }, 600);
+});
