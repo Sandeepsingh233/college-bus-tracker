@@ -7,7 +7,7 @@ body {
     box-sizing: border-box;
 }
 
-/* SEQUENTIAL REVEAL POPUP ANIMATION CLASSES */
+/* SEQUENTIAL REVEAL ANIMATIONS */
 .seq-hidden {
     opacity: 0;
     transform: scale(0.8) translateY(20px);
@@ -82,10 +82,12 @@ button, .role-card, a.button {
     }
 }
 
-.spiderman-hero-card {
-    background: linear-gradient(135deg, #1e1b4b 0%, #311033 50%, #172554 100%);
-    box-shadow: 0 10px 30px rgba(225, 29, 72, 0.15), inset 0 0 20px rgba(59, 130, 246, 0.2);
+/* BATMAN HERO CARD STYLING */
+.batman-hero-card {
+    background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #27272a 100%);
+    box-shadow: 0 10px 30px rgba(234, 179, 8, 0.2), inset 0 0 25px rgba(0, 0, 0, 0.8);
     position: relative;
+    border-color: rgba(234, 179, 8, 0.4) !important;
 }
 
 .role-card.active {
@@ -95,10 +97,21 @@ button, .role-card, a.button {
     transform: translateY(-2px);
 }
 
+/* ADMIN THEMES */
 .admin-theme {
     background-color: #070b14;
     background-image: radial-gradient(at 0% 0%, rgba(0, 170, 255, 0.08) 0px, transparent 50%);
     color: #f1f5f9;
+}
+
+.admin-theme.matrix-theme {
+    background-color: #020c05 !important;
+    background-image: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%) !important;
+}
+
+.admin-theme.batman-theme {
+    background-color: #09090b !important;
+    background-image: radial-gradient(at 0% 0%, rgba(234, 179, 8, 0.1) 0px, transparent 50%) !important;
 }
 
 .admin-card {
